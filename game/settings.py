@@ -1,0 +1,11 @@
+WIDTH, HEIGHT = 1000, 800
+FPS = 30
+PLAYER_VEL = 1 
+TILE_SIZE=52
+SPRITE_SIZE=16
+CHARACTER_LENGTH=32
+CHARACTER_WIDTH=3
+screen_height = 800
+screen_width = 600
+lower_margin = 300
+side_margin = 300
