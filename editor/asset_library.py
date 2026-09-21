@@ -118,11 +118,18 @@ def load_fire():
     image = load_image(
         "assets/Traps/Fire/on.png"
     )
+    frame = image.subsurface(
+        pygame.Rect(0, 0, 16, 32)
+    ).copy()
+    frame = pygame.transform.scale(
+        frame,
+        (TILE_SIZE, TILE_SIZE)
+    )
 
     asset = Asset(
         id="fire",
         name="Fire",
-        image=image,
+        image=frame,
         category="TRAPS",
         object_class=Fire,
         width=TILE_SIZE,
@@ -137,6 +144,10 @@ def load_checkpoint():
     image = load_image(
         "assets/Items/Checkpoints/"
         "Checkpoint/Checkpoint (No Flag).png"
+    )
+    image=pygame.transform.scale(
+        image,
+        (TILE_SIZE,TILE_SIZE)
     )
 
     asset = Asset(
@@ -158,6 +169,10 @@ def load_start():
         "assets/Items/Checkpoints/"
         "Start/Start (Idle)(1).png"
     )
+    image=pygame.transform.scale(
+            image,
+            (TILE_SIZE,TILE_SIZE)
+        )
 
     asset = Asset(
         id="start",
@@ -178,6 +193,10 @@ def load_end():
         "assets/Items/Checkpoints/"
         "End/End (Idle)(1).png"
     )
+    image=pygame.transform.scale(
+            image,  
+            (TILE_SIZE,TILE_SIZE)
+        )
 
     asset = Asset(
         id="end",
@@ -252,6 +271,7 @@ def load_assets():
     load_end()
 
     load_backgrounds()
+    get_categories()
 
     return Assets
 

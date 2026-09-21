@@ -5,7 +5,7 @@ from game.settings import FPS, TILE_SIZE, SPRITE_SIZE, screen_width
 from .Grid import draw_grid
 from .mouse import mouse
 from .camera import camera
-from .asset_library import load_assets
+from .asset_library import load_assets,get_categories
 from .palette import Palette
 from .dropdown import OptionBox
 from .undo_redo import Action
@@ -14,7 +14,7 @@ from .undo_redo import Action
 # --------------------------------------------------
 # INITIALIZATION
 # --------------------------------------------------
-
+ASSETS = load_assets()
 py.init()
 
 screen_height = 800
@@ -32,7 +32,8 @@ level_data = {
 undo_stack = []
 redo_stack = []
 
-option_list = ["CHARACTERS", "TILES"]
+option_list = get_categories()
+print("Categories:", option_list)
 
 font = py.font.SysFont("TimesNewRoman", 24)
 
@@ -48,7 +49,7 @@ clock = py.time.Clock()
 cam = camera(screen_width, screen_height)
 
 # Load all available assets
-ASSETS = load_assets()
+
 
 # Load existing level
 placed_assets = load_level(ASSETS)
@@ -162,13 +163,6 @@ def main(screen):
                         tile_x = world_x // TILE_SIZE
                         tile_y = world_y // TILE_SIZE
 
-                        print(
-                            "Placing",
-                            current_asset.id,
-                            "AT",
-                            tile_x,
-                            tile_y
-                        )
 
                         # Check if something already exists
                         old_asset = placed_assets.get(
