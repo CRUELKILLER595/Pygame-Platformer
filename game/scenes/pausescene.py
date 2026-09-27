@@ -20,13 +20,13 @@ class PauseScene(Scene):
         self.game_scene = game_scene
 
         font = p.font.SysFont(
-            "Arial",
+            "Times New Roman",
             24
         )
 
         self.resume_button = Button(
             "Resume",
-            (440, 220),
+            (440, 210),
             (200, 50),
             font,
             self.resume_game
@@ -39,10 +39,16 @@ class PauseScene(Scene):
             font,
             self.restart_game
         )
+        self.menu_button=Button(
+            "Main Menu",
+            (440,350),
+            (200,50),font,
+            self.main_menu
+        )
 
         self.level_select = Button(
             "Level Select",
-            (440, 340),
+            (440, 420),
             (200, 50),
             font,
             self.level_select_game
@@ -50,7 +56,7 @@ class PauseScene(Scene):
 
         self.option_button = Button(
             "Options",
-            (440, 400),
+            (440, 490),
             (200, 50),
             font,
             self.option_game
@@ -58,11 +64,12 @@ class PauseScene(Scene):
 
         self.quit_button = Button(
             "Quit",
-            (440, 460),
+            (440, 560),
             (200, 50),
             font,
             self.quit_game
         )
+        
 
     def resume_game(self):
 
@@ -83,6 +90,11 @@ class PauseScene(Scene):
                 self.scene_manager,
                 self.game_scene.level_path
             )
+        )
+    def main_menu(self):
+        from .menu_scene import MenuScene
+        self.scene_manager.change_scene(
+            MenuScene(self.scene_manager)
         )
 
     def level_select_game(self):
@@ -140,6 +152,9 @@ class PauseScene(Scene):
             self.option_button.handle_event(
                 event
             )
+            self.menu_button.handle_event(
+    event
+)
 
             self.quit_button.handle_event(
                 event
@@ -184,6 +199,9 @@ class PauseScene(Scene):
         self.resume_button.draw(
             screen
         )
+        self.menu_button.draw(
+    screen
+)
 
         self.restart_button.draw(
             screen

@@ -1,6 +1,8 @@
 import pygame as p
 
 from .base_scene import Scene
+from ..systems.score_manager import ScoreManager
+from ..systems.asset_manager import AssetManager
 
 from ..settings import (
     WIDTH,
@@ -15,6 +17,7 @@ from ..objects.fire import Fire
 from ..objects.checkpoint import Checkpoint
 from ..objects.start import Start
 from ..objects.end import End
+from ..objects.fruit import Fruit
 
 from .pausescene import PauseScene
 
@@ -41,13 +44,28 @@ class GameScene(Scene):
         level_path
     ):
 
+        self.asset_manager = AssetManager()
+
         self.scene_manager = scene_manager
+
+        self.score_manager = ScoreManager()
+
         self.level_path = level_path
+
+        self.asset_manager.load_all()
+
+        # --------------------------------------------------
+        # FONT
+        # --------------------------------------------------
 
         font = p.font.SysFont(
             "Arial",
             22
         )
+
+        # --------------------------------------------------
+        # BUTTONS
+        # --------------------------------------------------
 
         self.pause_button = Button(
             "Pause",
@@ -65,20 +83,64 @@ class GameScene(Scene):
             self.open_settings
         )
 
+        # --------------------------------------------------
+        # LEVEL
+        # --------------------------------------------------
+
         self.level_manager = LevelManager()
+
+        # --------------------------------------------------
+        # BACKGROUND
+        # --------------------------------------------------
 
         self.background = TiledBackground(
             BACKGROUND_PATH
         )
 
+        # --------------------------------------------------
+        # CAMERA
+        # --------------------------------------------------
+
         self.offset_x = 0
+
         self.scroll_area_width = 200
+
+        # --------------------------------------------------
+        # LOAD LEVEL
+        # --------------------------------------------------
 
         self.player, self.objects = (
             self.level_manager.load_level(
                 self.level_path
             )
         )
+
+        # --------------------------------------------------
+        # TEST FRUIT
+        # --------------------------------------------------
+
+        apple_asset = (
+            self.asset_manager.get(
+                "apple"
+            )
+        )
+
+        if apple_asset is not None:
+
+            apple = Fruit(
+                500,
+                300,
+                apple_asset,
+                "Apple"
+            )
+
+            self.objects.append(
+                apple
+            )
+
+        # --------------------------------------------------
+        # CHECKPOINT
+        # --------------------------------------------------
 
         if self.player is not None:
 
@@ -94,8 +156,10 @@ class GameScene(Scene):
                 CheckpointManager()
             )
 
-        # If a Start object exists,
-        # use it as the initial respawn position.
+        # --------------------------------------------------
+        # START POSITION
+        # --------------------------------------------------
+
         if self.player is not None:
 
             for obj in self.objects:
@@ -125,9 +189,17 @@ class GameScene(Scene):
             len(self.objects)
         )
 
+        # --------------------------------------------------
+        # MUSIC
+        # --------------------------------------------------
+
         audio_manager.play_music(
             MUSIC_PATH
         )
+
+    # ======================================================
+    # DRAW
+    # ======================================================
 
     def draw(
         self,
@@ -138,6 +210,10 @@ class GameScene(Scene):
             screen
         )
 
+        # --------------------------------------------------
+        # OBJECTS
+        # --------------------------------------------------
+
         for obj in self.objects:
 
             obj.draw(
@@ -145,12 +221,20 @@ class GameScene(Scene):
                 self.offset_x
             )
 
+        # --------------------------------------------------
+        # PLAYER
+        # --------------------------------------------------
+
         if self.player is not None:
 
             self.player.draw(
                 screen,
                 self.offset_x
             )
+
+        # --------------------------------------------------
+        # UI
+        # --------------------------------------------------
 
         self.pause_button.draw(
             screen
@@ -160,9 +244,21 @@ class GameScene(Scene):
             screen
         )
 
+    # ======================================================
+    # HORIZONTAL MOVEMENT
+    # ======================================================
+
     def handle_move(self):
 
+        if self.player is None:
+
+            return
+
         keys = p.key.get_pressed()
+
+        # ----------------------------------------------
+        # LEFT
+        # ----------------------------------------------
 
         if keys[p.K_a]:
 
@@ -170,18 +266,35 @@ class GameScene(Scene):
                 PLAYER_VEL
             )
 
+        # ----------------------------------------------
+        # RIGHT
+        # ----------------------------------------------
+
         elif keys[p.K_d]:
 
             self.player.move_right(
                 PLAYER_VEL
             )
 
+        # ----------------------------------------------
+        # STOP
+        # ----------------------------------------------
+
         else:
 
             self.player.x_vel = 0
+
             self.player.animation_count = 0
 
+    # ======================================================
+    # VERTICAL COLLISION
+    # ======================================================
+
     def handle_vertical_collision(self):
+
+        if self.player is None:
+
+            return
 
         for obj in self.objects:
 
@@ -194,11 +307,16 @@ class GameScene(Scene):
                     End
                 )
             ):
+
                 continue
 
             if self.player.rect.colliderect(
                 obj.rect
             ):
+
+                # ------------------------------------------
+                # FALLING
+                # ------------------------------------------
 
                 if self.player.y_vel > 0:
 
@@ -208,6 +326,10 @@ class GameScene(Scene):
 
                     self.player.landed()
 
+                # ------------------------------------------
+                # MOVING UP
+                # ------------------------------------------
+
                 elif self.player.y_vel < 0:
 
                     self.player.rect.top = (
@@ -216,7 +338,15 @@ class GameScene(Scene):
 
                     self.player.hit_head()
 
+    # ======================================================
+    # CHECKPOINTS
+    # ======================================================
+
     def handle_checkpoints(self):
+
+        if self.player is None:
+
+            return
 
         for obj in self.objects:
 
@@ -239,7 +369,15 @@ class GameScene(Scene):
                             "CHECKPOINT ACTIVATED"
                         )
 
+    # ======================================================
+    # HAZARDS
+    # ======================================================
+
     def handle_hazards(self):
+
+        if self.player is None:
+
+            return
 
         for obj in self.objects:
 
@@ -253,9 +391,18 @@ class GameScene(Scene):
                 ):
 
                     self.respawn_player()
+
                     return
 
+    # ======================================================
+    # END
+    # ======================================================
+
     def handle_end(self):
+
+        if self.player is None:
+
+            return
 
         for obj in self.objects:
 
@@ -276,7 +423,15 @@ class GameScene(Scene):
                             "LEVEL COMPLETE"
                         )
 
+    # ======================================================
+    # FALL
+    # ======================================================
+
     def handle_fall(self):
+
+        if self.player is None:
+
+            return
 
         if (
             self.player.rect.top >
@@ -285,7 +440,15 @@ class GameScene(Scene):
 
             self.respawn_player()
 
+    # ======================================================
+    # RESPAWN
+    # ======================================================
+
     def respawn_player(self):
+
+        if self.player is None:
+
+            return
 
         x, y = (
             self.checkpoint_manager
@@ -301,6 +464,10 @@ class GameScene(Scene):
 
         self.offset_x = 0
 
+    # ======================================================
+    # EVENTS
+    # ======================================================
+
     def handle_events(
         self,
         events
@@ -308,10 +475,19 @@ class GameScene(Scene):
 
         for event in events:
 
+            # ----------------------------------------------
+            # QUIT
+            # ----------------------------------------------
+
             if event.type == p.QUIT:
 
                 p.quit()
+
                 raise SystemExit
+
+            # ----------------------------------------------
+            # BUTTONS
+            # ----------------------------------------------
 
             self.pause_button.handle_event(
                 event
@@ -321,17 +497,35 @@ class GameScene(Scene):
                 event
             )
 
+            # ----------------------------------------------
+            # KEYBOARD
+            # ----------------------------------------------
+
             if event.type == p.KEYDOWN:
+
+                # ------------------------------------------
+                # ESCAPE
+                # ------------------------------------------
 
                 if event.key == p.K_ESCAPE:
 
                     self.open_settings()
 
+                # ------------------------------------------
+                # JUMP
+                # ------------------------------------------
+
                 elif event.key == p.K_SPACE:
 
-                    if self.player.jump_count < 2:
+                    if self.player is not None:
 
+                        # Player itself enforces the
+                        # maximum number of jumps.
                         self.player.jump()
+
+    # ======================================================
+    # SETTINGS
+    # ======================================================
 
     def open_settings(self):
 
@@ -344,6 +538,10 @@ class GameScene(Scene):
             )
         )
 
+    # ======================================================
+    # PAUSE
+    # ======================================================
+
     def pause_game(self):
 
         audio_manager.stop_music()
@@ -355,28 +553,64 @@ class GameScene(Scene):
             )
         )
 
+    # ======================================================
+    # UPDATE
+    # ======================================================
+
     def update(self):
 
         if self.player is None:
+
             return
 
+        # --------------------------------------------------
+        # HORIZONTAL MOVEMENT
+        # --------------------------------------------------
+
         self.handle_move()
+
+        # --------------------------------------------------
+        # PLAYER PHYSICS
+        # --------------------------------------------------
 
         self.player.loop(
             FPS
         )
 
+        # --------------------------------------------------
+        # COLLISION
+        # --------------------------------------------------
+
         self.handle_vertical_collision()
+
+        # --------------------------------------------------
+        # CHECKPOINT
+        # --------------------------------------------------
 
         self.handle_checkpoints()
 
+        # --------------------------------------------------
+        # HAZARDS
+        # --------------------------------------------------
+
         self.handle_hazards()
+
+        # --------------------------------------------------
+        # END
+        # --------------------------------------------------
 
         self.handle_end()
 
+        # --------------------------------------------------
+        # FALL
+        # --------------------------------------------------
+
         self.handle_fall()
 
-        # Update animated objects.
+        # --------------------------------------------------
+        # ANIMATED OBJECTS
+        # --------------------------------------------------
+
         for obj in self.objects:
 
             if isinstance(
@@ -386,12 +620,16 @@ class GameScene(Scene):
 
                 obj.loop()
 
-        # Camera movement.
+        # --------------------------------------------------
+        # CAMERA
+        # --------------------------------------------------
+
         if (
-            self.player.rect.right -
-            self.offset_x >=
-            WIDTH -
-            self.scroll_area_width
+            self.player.rect.right
+            - self.offset_x
+            >=
+            WIDTH
+            - self.scroll_area_width
             and
             self.player.x_vel > 0
         ):
@@ -401,8 +639,9 @@ class GameScene(Scene):
             )
 
         elif (
-            self.player.rect.left -
-            self.offset_x <=
+            self.player.rect.left
+            - self.offset_x
+            <=
             self.scroll_area_width
             and
             self.player.x_vel < 0

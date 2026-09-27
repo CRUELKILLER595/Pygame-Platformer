@@ -14,6 +14,8 @@ from editor.palette import Palette
 from editor.dropdown import OptionBox
 from editor.undo_redo import Action
 
+from ..objects.player import Player
+
 from ..settings import screen_width
 
 
@@ -101,7 +103,7 @@ class EditorScene(Scene):
             self.screen_width + 10,
             55,
             300,
-            "Characters"
+            "CHARACTERS"
         )
 
         # --------------------------------------------------
@@ -117,8 +119,6 @@ class EditorScene(Scene):
 
         except TypeError:
 
-            # Your current load_level() may only accept ASSETS.
-            # This keeps compatibility with your old editor.
             self.placed_assets = load_level(
                 self.ASSETS
             )
@@ -129,17 +129,116 @@ class EditorScene(Scene):
 
             self.placed_assets = {}
 
+        # --------------------------------------------------
+        # CLEAN EXISTING PLAYER DUPLICATES
+        # --------------------------------------------------
+
+        self.clean_player_spawns()
+
         print("EDITOR LOADED:", self.level_path)
+
+    # ======================================================
+    # PLAYER HELPERS
+    # ======================================================
+
+    def is_player_asset(self, asset):
+
+        if asset is None:
+            return False
+
+        return asset.object_class == Player
+
+    def get_player_positions(self):
+
+        positions = []
+
+        for position, asset in self.placed_assets.items():
+
+            if self.is_player_asset(asset):
+                positions.append(position)
+
+        return positions
+
+    def clean_player_spawns(self):
+
+        player_positions = self.get_player_positions()
+
+        if len(player_positions) <= 1:
+            return
+
+        # Keep the first player.
+        keep_position = player_positions[0]
+
+        print(
+            "WARNING: Multiple player spawns found.",
+            "Keeping:",
+            keep_position
+        )
+
+        for position in player_positions[1:]:
+
+            self.placed_assets.pop(
+                position,
+                None
+            )
+
+    # ======================================================
+    # GRID HELPERS
+    # ======================================================
+
+    def get_tile_from_mouse(self, mouse_x, mouse_y):
+
+        world_x, world_y = (
+            self.cam.screen_to_world(
+                mouse_x,
+                mouse_y
+            )
+        )
+
+        # Force integer grid coordinates.
+        tile_x = int(world_x // TILE_SIZE)
+        tile_y = int(world_y // TILE_SIZE)
+
+        return tile_x, tile_y
+
+    def get_asset_image(self, asset):
+
+        if asset is None:
+            return None
+
+        image = asset.image
+
+        target_width = int(asset.width)
+        target_height = int(asset.height)
+
+        if (
+            image.get_width() != target_width
+            or
+            image.get_height() != target_height
+        ):
+
+            image = p.transform.scale(
+                image,
+                (
+                    target_width,
+                    target_height
+                )
+            )
+
+        return image
 
     # ======================================================
     # EVENTS
     # ======================================================
 
     def handle_events(self, events):
+
         selected = self.Box.update(events)
 
         if selected != -1:
-         self.pal.category = selected
+
+            self.pal.category = selected
+
         for event in events:
 
             # ------------------------------------------------
@@ -165,11 +264,16 @@ class EditorScene(Scene):
 
                 if event.button == 1:
 
-                    # Palette
+                    # ----------------------------------------
+                    # PALETTE
+                    # ----------------------------------------
+
                     if mouse_x > self.screen_width:
 
-                        clicked_asset = self.pal.get_clicked_asset(
-                            (mouse_x, mouse_y)
+                        clicked_asset = (
+                            self.pal.get_clicked_asset(
+                                (mouse_x, mouse_y)
+                            )
                         )
 
                         if clicked_asset is not None:
@@ -181,36 +285,106 @@ class EditorScene(Scene):
                                 self.current_asset.id
                             )
 
-                    # World
+                    # ----------------------------------------
+                    # WORLD
+                    # ----------------------------------------
+
                     elif self.current_asset is not None:
 
-                        world_x, world_y = (
-                            self.cam.screen_to_world(
+                        tile_x, tile_y = (
+                            self.get_tile_from_mouse(
                                 mouse_x,
                                 mouse_y
                             )
                         )
 
-                        tile_x = world_x // TILE_SIZE
-                        tile_y = world_y // TILE_SIZE
-
-                        old_asset = self.placed_assets.get(
-                            (tile_x, tile_y)
+                        position = (
+                            tile_x,
+                            tile_y
                         )
 
-                        action = Action(
-                            (tile_x, tile_y),
-                            old_asset,
+                        old_asset = (
+                            self.placed_assets.get(
+                                position
+                            )
+                        )
+
+                        # ------------------------------------
+                        # PLAYER PLACEMENT
+                        # ------------------------------------
+
+                        if self.is_player_asset(
                             self.current_asset
-                        )
+                        ):
 
-                        self.placed_assets[
-                            (tile_x, tile_y)
-                        ] = self.current_asset
+                            removed_players = {}
 
-                        self.undo_stack.append(action)
+                            # Remove all existing players.
+                            for player_position in (
+                                self.get_player_positions()
+                            ):
 
-                        self.redo_stack.clear()
+                                if player_position == position:
+                                    continue
+
+                                removed_players[
+                                    player_position
+                                ] = self.placed_assets[
+                                    player_position
+                                ]
+
+                                self.placed_assets.pop(
+                                    player_position
+                                )
+
+                            # If replacing a player at this tile,
+                            # preserve the previous asset for undo.
+                            action = Action(
+                                position,
+                                old_asset,
+                                self.current_asset
+                            )
+
+                            # Store extra removed players so undo
+                            # can restore them if necessary.
+                            action.removed_players = (
+                                removed_players
+                            )
+
+                            self.placed_assets[
+                                position
+                            ] = self.current_asset
+
+                            self.undo_stack.append(action)
+
+                            self.redo_stack.clear()
+
+                            print(
+                                "PLAYER SPAWN SET TO:",
+                                position
+                            )
+
+                        # ------------------------------------
+                        # NORMAL ASSET
+                        # ------------------------------------
+
+                        else:
+
+                            action = Action(
+                                position,
+                                old_asset,
+                                self.current_asset
+                            )
+
+                            self.placed_assets[
+                                position
+                            ] = self.current_asset
+
+                            self.undo_stack.append(
+                                action
+                            )
+
+                            self.redo_stack.clear()
 
                 # --------------------------------------------
                 # RIGHT CLICK = DELETE
@@ -218,33 +392,39 @@ class EditorScene(Scene):
 
                 elif event.button == 3:
 
-                    world_x, world_y = (
-                        self.cam.screen_to_world(
+                    tile_x, tile_y = (
+                        self.get_tile_from_mouse(
                             mouse_x,
                             mouse_y
                         )
                     )
 
-                    tile_x = world_x // TILE_SIZE
-                    tile_y = world_y // TILE_SIZE
+                    position = (
+                        tile_x,
+                        tile_y
+                    )
 
-                    if (tile_x, tile_y) in self.placed_assets:
+                    if position in self.placed_assets:
 
-                        old_asset = self.placed_assets[
-                            (tile_x, tile_y)
-                        ]
+                        old_asset = (
+                            self.placed_assets[
+                                position
+                            ]
+                        )
 
                         action = Action(
-                            (tile_x, tile_y),
+                            position,
                             old_asset,
                             None
                         )
 
                         self.placed_assets.pop(
-                            (tile_x, tile_y)
+                            position
                         )
 
-                        self.undo_stack.append(action)
+                        self.undo_stack.append(
+                            action
+                        )
 
                         self.redo_stack.clear()
 
@@ -334,14 +514,6 @@ class EditorScene(Scene):
 
             self.cam.y += self.camera_speed
 
-        # --------------------------------------------------
-        # DROPDOWN
-        # --------------------------------------------------
-
-        # Mouse position is needed for palette/dropdown.
-        # Events are handled separately.
-        pass
-
     # ======================================================
     # DRAW
     # ======================================================
@@ -365,8 +537,8 @@ class EditorScene(Scene):
 
         for (x, y), asset in self.placed_assets.items():
 
-            world_x = x * TILE_SIZE
-            world_y = y * TILE_SIZE
+            world_x = int(x) * TILE_SIZE
+            world_y = int(y) * TILE_SIZE
 
             screen_x, screen_y = (
                 self.cam.world_to_screen(
@@ -375,20 +547,36 @@ class EditorScene(Scene):
                 )
             )
 
-            screen.blit(
-                asset.image,
-                (screen_x, screen_y)
+            screen_x = int(screen_x)
+            screen_y = int(screen_y)
+
+            image = self.get_asset_image(
+                asset
             )
+
+            if image is not None:
+
+                screen.blit(
+                    image,
+                    (
+                        screen_x,
+                        screen_y
+                    )
+                )
 
         # --------------------------------------------------
         # UI
         # --------------------------------------------------
 
-        self.pal.draw_palette(screen)
+        self.pal.draw_palette(
+            screen
+        )
 
         mouse(screen)
 
-        self.Box.draw(screen)
+        self.Box.draw(
+            screen
+        )
 
     # ======================================================
     # SAVE
@@ -396,7 +584,10 @@ class EditorScene(Scene):
 
     def save_level(self):
 
-        print("SAVING:", self.level_path)
+        print(
+            "SAVING:",
+            self.level_path
+        )
 
         save_level(
             self.level_data,
@@ -417,10 +608,12 @@ class EditorScene(Scene):
         print("==============================")
         print()
 
-        # Save before playing
+        # Make absolutely sure only one
+        # player is saved.
+        self.clean_player_spawns()
+
         self.save_level()
 
-        # Switch scene
         self.scene_manager.change_scene(
             GameScene(
                 self.scene_manager,
@@ -443,6 +636,8 @@ class EditorScene(Scene):
         position = action.position
         old_asset = action.old_asset
 
+        # Restore the asset that was originally
+        # at the clicked position.
         if old_asset is None:
 
             self.placed_assets.pop(
@@ -456,7 +651,25 @@ class EditorScene(Scene):
                 position
             ] = old_asset
 
-        self.redo_stack.append(action)
+        # Restore any player positions removed
+        # by a player-reposition action.
+        removed_players = getattr(
+            action,
+            "removed_players",
+            {}
+        )
+
+        for player_position, player_asset in (
+            removed_players.items()
+        ):
+
+            self.placed_assets[
+                player_position
+            ] = player_asset
+
+        self.redo_stack.append(
+            action
+        )
 
     # ======================================================
     # REDO
@@ -473,6 +686,23 @@ class EditorScene(Scene):
         position = action.position
         new_asset = action.new_asset
 
+        # Remove any players that were removed
+        # during the original action.
+        removed_players = getattr(
+            action,
+            "removed_players",
+            {}
+        )
+
+        for player_position in (
+            removed_players.keys()
+        ):
+
+            self.placed_assets.pop(
+                player_position,
+                None
+            )
+
         if new_asset is None:
 
             self.placed_assets.pop(
@@ -486,4 +716,6 @@ class EditorScene(Scene):
                 position
             ] = new_asset
 
-        self.undo_stack.append(action)
+        self.undo_stack.append(
+            action
+        )

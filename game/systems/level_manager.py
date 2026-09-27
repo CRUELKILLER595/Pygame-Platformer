@@ -38,15 +38,15 @@ class LevelManager:
 
             asset_id = data["id"]
 
-            x = (
-                data["x"] *
-                TILE_SIZE
-            )
+            # --------------------------------------------------
+            # FORCE INTEGER GRID COORDINATES
+            # --------------------------------------------------
 
-            y = (
-                data["y"] *
-                TILE_SIZE
-            )
+            grid_x = int(data["x"])
+            grid_y = int(data["y"])
+
+            x = grid_x * TILE_SIZE
+            y = grid_y * TILE_SIZE
 
             asset = self.assets.get(
                 asset_id
@@ -61,18 +61,36 @@ class LevelManager:
 
                 continue
 
+            # ==================================================
+            # PLAYER
+            # ==================================================
+
             if asset.object_class == Player:
 
-                obj = Player(
+                # Only one playable player is allowed.
+                if player is not None:
+
+                    print(
+                        "WARNING: Extra player spawn ignored:",
+                        asset_id,
+                        "at",
+                        (grid_x, grid_y)
+                    )
+
+                    continue
+
+                player = Player(
                     x,
                     y,
                     asset.width,
                     asset.height
                 )
 
-                player = obj
-
                 continue
+
+            # ==================================================
+            # BLOCK
+            # ==================================================
 
             elif asset.object_class == Block:
 
@@ -82,6 +100,10 @@ class LevelManager:
                     asset.width,
                     asset.image
                 )
+
+            # ==================================================
+            # FIRE
+            # ==================================================
 
             elif asset.object_class == Fire:
 
@@ -94,6 +116,10 @@ class LevelManager:
 
                 obj.on()
 
+            # ==================================================
+            # CHECKPOINT
+            # ==================================================
+
             elif asset.object_class == Checkpoint:
 
                 obj = Checkpoint(
@@ -102,6 +128,10 @@ class LevelManager:
                     asset.width,
                     asset.height
                 )
+
+            # ==================================================
+            # START
+            # ==================================================
 
             elif asset.object_class == Start:
 
@@ -112,6 +142,10 @@ class LevelManager:
                     asset.height
                 )
 
+            # ==================================================
+            # END
+            # ==================================================
+
             elif asset.object_class == End:
 
                 obj = End(
@@ -120,6 +154,10 @@ class LevelManager:
                     asset.width,
                     asset.height
                 )
+
+            # ==================================================
+            # GENERIC OBJECT
+            # ==================================================
 
             elif asset.object_class == Object:
 
@@ -133,6 +171,10 @@ class LevelManager:
 
                 obj.image = asset.image
 
+            # ==================================================
+            # UNKNOWN
+            # ==================================================
+
             else:
 
                 print(
@@ -142,6 +184,14 @@ class LevelManager:
 
                 continue
 
-            objects.append(obj)
+            objects.append(
+                obj
+            )
+
+        if player is None:
+
+            print(
+                "WARNING: Level has no player spawn!"
+            )
 
         return player, objects
