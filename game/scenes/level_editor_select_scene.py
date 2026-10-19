@@ -2,9 +2,12 @@ import pygame as p
 import os
 import re
 
+from pathlib import Path
+
+
 from ui.button import Button
 from .base_scene import Scene
-
+from..systems.background import TiledBackground
 from game.settings import WIDTH, HEIGHT
 
 
@@ -322,9 +325,8 @@ class EditorLevelSelectScene(Scene):
         screen
     ):
 
-        screen.fill(
-            (0, 0,0)
-        )
+        background = TiledBackground("assets/Background/Gray.png")
+        background.draw(screen)
 
         title = self.title_font.render(
             "SELECT LEVEL TO EDIT",

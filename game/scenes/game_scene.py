@@ -1,9 +1,12 @@
+from game.objects.trap import Trap
 import pygame as p
+from pathlib import Path
 
 from .base_scene import Scene
 from ..systems.score_manager import ScoreManager
 from ..systems.asset_manager import AssetManager,Asset
 from ..systems.game_timer import GameTimer
+from ..systems.character_registry import DEFAULT_CHARACTER
 from ..settings import (
     WIDTH,
     HEIGHT,
@@ -17,6 +20,7 @@ from ..objects.fire import Fire
 from ..objects.checkpoint import Checkpoint
 from ..objects.start import Start
 from ..objects.end import End
+from..objects.trap import Trap
 from ..objects.fruit import Fruit
 from ..objects.animated_object import AnimatedObject
 
@@ -43,7 +47,9 @@ class GameScene(Scene):
     def __init__(
         self,
         scene_manager,
-        level_path
+        level_path,
+        level_metadata=None,
+        level_catalog=None
     ):
 
         self.asset_manager = AssetManager()
@@ -52,7 +58,26 @@ class GameScene(Scene):
 
         self.score_manager = ScoreManager()
 
-        self.level_path = level_path
+        self.level_path = str(level_path)
+
+        # Metadata travels with this scene; the path is only for loading the JSON.
+        # This also keeps older callers that pass only a path working.
+        if isinstance(level_metadata, dict):
+            self.level_metadata = dict(level_metadata)
+        else:
+            level_file = Path(self.level_path)
+            self.level_metadata = {
+                "id": level_file.stem,
+                "title": level_file.stem.replace("_", " ").title(),
+                "source": "local",
+                "filename": level_file.name,
+                "playable": True,
+            }
+
+        self.level_catalog = [
+            dict(level) for level in (level_catalog or [])
+        ]
+
         self.game_timer = GameTimer(
     120
 )
@@ -62,7 +87,6 @@ class GameScene(Scene):
     self.game_timer
 )
 
-        self.asset_manager.load_all()
         self.asset_manager.load_all()
 
         print("ASSET CATEGORIES:", self.asset_manager.get_categories())
@@ -126,11 +150,18 @@ class GameScene(Scene):
         # LOAD LEVEL
         # --------------------------------------------------
 
+        character_id = getattr(
+          self.scene_manager,
+    "selected_character_id",
+    DEFAULT_CHARACTER,
+)
+
         self.player, self.objects = (
-            self.level_manager.load_level(
-                self.level_path
-            )
-        )
+    self.level_manager.load_level(
+        self.level_path,
+        character_id,
+    )
+)
      
         print("\n========== LEVEL OBJECTS ==========")
 
@@ -280,7 +311,7 @@ class GameScene(Scene):
         # LEFT
         # ----------------------------------------------
 
-        if keys[p.K_a or p.K_left_arrow]:
+        if keys[p.K_a] or keys[p.K_LEFT]:
 
             self.player.move_left(
                 PLAYER_VEL
@@ -290,7 +321,7 @@ class GameScene(Scene):
         # RIGHT
         # ----------------------------------------------
 
-        elif keys[p.K_d or p.K_right_arrow]:
+        elif keys[p.K_d] or keys[p.K_RIGHT]:
 
             self.player.move_right(
                 PLAYER_VEL
@@ -313,66 +344,66 @@ class GameScene(Scene):
     # VERTICAL COLLISION
     # ======================================================
 
-    def handle_vertical_collision(self):
-
-        if self.player is None:
-
-            return
-
-        for obj in self.objects:
-
-            if isinstance(
-                obj,
-                (
-                    Fire,
-                    Checkpoint,
-                    Fruit,
-                    Start,
-                    End
-                )
-            ):
-
-                continue
-
-            if self.player.rect.colliderect(
-                obj.rect
-            ):
-
-                # ------------------------------------------
-                # FALLING
-                # ------------------------------------------
-
-                if self.player.y_vel > 0:
-
-                    self.player.rect.bottom = (
-                        obj.rect.top
-                    )
-
-                    self.player.landed()
-
-                # ------------------------------------------
-                # MOVING UP
-                # ------------------------------------------
-
-                elif self.player.y_vel < 0:
-
-                    self.player.rect.top = (
-                        obj.rect.bottom
-                    )
-
-                    self.player.hit_head()
-
+    
+    
     # ======================================================
     # CHECKPOINTS
     # ======================================================
+    
+    def handle_vertical_collision(self):
+     if self.player is None:
+        return
+
+     for obj in self.objects:
+        if isinstance(
+            obj,
+            (Fire,Trap, Checkpoint, Fruit, Start, End)
+        ):
+            continue
+
+        # Ignore blocks with only a tiny horizontal overlap.
+        horizontal_overlap = min(
+            self.player.rect.right,
+            obj.rect.right
+        ) - max(
+            self.player.rect.left,
+            obj.rect.left
+        )
+
+        if horizontal_overlap < 8:
+            continue
+
+        if not self.player.rect.colliderect(obj.rect):
+            continue
+
+        # Landing while falling.
+        if self.player.y_vel > 0:
+            previous_bottom = (
+                self.player.rect.bottom - self.player.y_vel
+            )
+
+            # Only land if the player crossed the block's top.
+            if previous_bottom <= obj.rect.top:
+                self.player.rect.bottom = obj.rect.top
+                self.player.landed()
+
+        # Hitting a block from below while jumping.
+        elif self.player.y_vel < 0:
+            previous_top = (
+                self.player.rect.top - self.player.y_vel
+            )
+
+            if previous_top >= obj.rect.bottom:
+                self.player.rect.top = obj.rect.bottom
+                self.player.hit_head()
 
     def handle_checkpoints(self):
 
-        if self.player is None:
+         if self.player is None:
 
             return
 
-        for obj in self.objects:
+         for obj in self.objects:
 
             if isinstance(
                 obj,
@@ -419,39 +450,52 @@ class GameScene(Scene):
                     return
 
     # ======================================================
+    # LEVEL PROGRESSION
+    # ======================================================
+
+    def get_next_level_metadata(self):
+        """Return the next playable catalogue entry after this level."""
+        playable_levels = [
+            level for level in self.level_catalog
+            if level.get("playable", False)
+        ]
+
+        current_id = self.level_metadata.get("id")
+
+        for index, level in enumerate(playable_levels):
+            if level.get("id") == current_id:
+                if index + 1 < len(playable_levels):
+                    return dict(playable_levels[index + 1])
+                return None
+
+        return None
+
+    # ======================================================
     # END
     # ======================================================
 
     def handle_end(self):
+        if self.player is None:
+            return False
 
-     if self.player is None:
-        return
-
-     for obj in self.objects:
-
-        if isinstance(
-            obj,
-            End
-        ):
-
-            if obj.check_collision(
-                self.player
-            ):
-
-                print(
-                    "LEVEL COMPLETE"
-                )
+        for obj in self.objects:
+            if isinstance(obj, End) and obj.check_collision(self.player):
+                print("LEVEL COMPLETE")
 
                 from .end_scene import EndScene
 
                 self.scene_manager.change_scene(
                     EndScene(
                         self.scene_manager,
-                        self.score_manager
+                        self.score_manager,
+                        current_level_metadata=self.level_metadata,
+                        next_level_metadata=self.get_next_level_metadata(),
+                        level_catalog=self.level_catalog,
                     )
                 )
+                return True
 
-                return
+        return False
 
     # ======================================================
     # FALL
@@ -630,7 +674,8 @@ class GameScene(Scene):
         # END
         # --------------------------------------------------
 
-        self.handle_end()
+        if self.handle_end():
+            return
 
         # --------------------------------------------------
         # FALL
@@ -642,63 +687,36 @@ class GameScene(Scene):
         # ANIMATED OBJECTS
         # --------------------------------------------------
 
-        # Update animated objects.
-        # Update animated objects.
-        for obj in self.objects:
+        for obj in list(self.objects):
+            if isinstance(obj, (Fire, Trap)):
+                obj.loop()
+                continue
 
-           if isinstance(
-        obj,
-        AnimatedObject
-    ):
+            if not isinstance(obj, AnimatedObject):
+                continue
 
-             if isinstance(
-            obj,
-            Fruit
-        ):
-
+            if isinstance(obj, Fruit):
                 obj.check_collision(
-                self.player,
-                self.score_manager
+                    self.player,
+                    self.score_manager
+                )
 
-            )
+            finished = obj.loop()
 
-                finished = obj.loop()
+            if (
+                isinstance(obj, Fruit)
+                and obj.collected
+                and finished
+            ):
+                self.objects.remove(obj)
 
-             if (
-            isinstance(obj, Fruit)
-            and obj.collected
-            and finished
-        ):
-
-               self.objects.remove(obj)
-               break
         # --------------------------------------------------
-        # CAMERA
+        # CAMERA (forward-only scrolling)
         # --------------------------------------------------
 
         if (
-            self.player.rect.right
-            - self.offset_x
-            >=
-            WIDTH
-            - self.scroll_area_width
-            and
-            self.player.x_vel > 0
+            self.player.rect.right - self.offset_x
+            >= WIDTH - self.scroll_area_width
+            and self.player.x_vel > 0
         ):
-
-            self.offset_x += (
-                self.player.x_vel
-            )
-
-        elif (
-            self.player.rect.left
-            - self.offset_x
-            <=
-            self.scroll_area_width
-            and
-            self.player.x_vel < 0
-        ):
-
-            self.offset_x += (
-                self.player.x_vel
-            )
+            self.offset_x += self.player.x_vel

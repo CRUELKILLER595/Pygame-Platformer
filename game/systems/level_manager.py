@@ -12,6 +12,8 @@ from game.objects.start import Start
 from game.objects.end import End
 from game.objects.object import Object
 from game.objects.fruit import Fruit
+from game.systems.character_registry import DEFAULT_CHARACTER
+from ..objects.trap import Trap
 from .asset_manager import Asset,AssetManager
 
 
@@ -22,7 +24,7 @@ class LevelManager:
 
     def load_level(
         self,
-        level_path
+        level_path,character_id=DEFAULT_CHARACTER
     ):
 
         with open(
@@ -39,9 +41,7 @@ class LevelManager:
 
             asset_id = data["id"]
 
-            # --------------------------------------------------
-            # FORCE INTEGER GRID COORDINATES
-            # --------------------------------------------------
+           
 
             grid_x = int(data["x"])
             grid_y = int(data["y"])
@@ -60,9 +60,7 @@ class LevelManager:
 
                 continue
 
-            # ==================================================
-            # PLAYER
-            # ==================================================
+          
 
             if asset.object_class == Player:
 
@@ -79,17 +77,15 @@ class LevelManager:
                     continue
 
                 player = Player(
-                    x,
-                    y,
-                    asset.width,
-                    asset.height
-                )
+    x,
+    y,
+    asset.width,
+    asset.height,
+    character_id=character_id
+)
 
                 continue
 
-            # ==================================================
-            # BLOCK
-            # ==================================================
 
             elif asset.object_class == Block:
 
@@ -100,9 +96,7 @@ class LevelManager:
                     asset.image
                 )
 
-            # ==================================================
-            # FIRE
-            # ==================================================
+           
 
             elif asset.object_class == Fire:
 
@@ -115,9 +109,7 @@ class LevelManager:
 
                 obj.on()
 
-            # ==================================================
-            # CHECKPOINT
-            # ==================================================
+          
 
             elif asset.object_class == Checkpoint:
 
@@ -128,10 +120,7 @@ class LevelManager:
                     asset.height
                 )
 
-            # ==================================================
-            # START
-            # ==================================================
-
+           
             elif asset.object_class == Start:
 
                 obj = Start(
@@ -140,10 +129,6 @@ class LevelManager:
                     asset.width,
                     asset.height
                 )
-
-            # ==================================================
-            # END
-            # ==================================================
 
             elif asset.object_class == End:
 
@@ -167,6 +152,29 @@ class LevelManager:
                     asset.height,
                     asset.name
                 )
+            
+# --------------------------------------------------
+# TRAPS
+# --------------------------------------------------
+
+            elif asset.category == "TRAPS":
+
+                if asset.object_class is Fire:
+        # Keep the existing Fire implementation.
+                 obj = Fire(
+            x,
+            y,
+            asset.width,
+            asset.height,
+        )
+                 obj.on()
+
+                else:
+        
+                   obj = Trap(x, y, asset)
+
+                   objects.append(obj)
+
 
                 obj.image = asset.image
             elif asset.object_class==Fruit:

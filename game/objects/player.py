@@ -1,10 +1,12 @@
 import pygame
 from game.SpriteLoader import load_sprite_sheets
-
+from ..systems.character_registry import (
+    CHARACTERS,
+    DEFAULT_CHARACTER,
+)
 from ..systems.audio_manager import audio_manager
 
 pygame.init()
-
 
 class Player(pygame.sprite.Sprite):
 
@@ -15,20 +17,14 @@ class Player(pygame.sprite.Sprite):
     # --------------------------------------------------
 
     GRAVITY = 0.65
-    JUMP_STRENGTH = 11
+    JUMP_STRENGTH = 50
     MAX_FALL_SPEED = 14
 
     # --------------------------------------------------
     # SPRITES
     # --------------------------------------------------
-
-    SPRITES = load_sprite_sheets(
-        "MainCharacters",
-        "MaskDude",
-        32,
-        32,
-        True
-    )
+    # Cache each character's sprites after loading them.
+    SPRITE_CACHE = {}
 
     ANIMATION_DELAY = 3
 
@@ -41,43 +37,67 @@ class Player(pygame.sprite.Sprite):
     # --------------------------------------------------
 
     def __init__(
-        self,
-        x,
-        y,
-        width,
-        height
-    ):
+    self,
+    x,
+    y,
+    width,
+    height,
+    character_id=DEFAULT_CHARACTER
+):
+     super().__init__()
 
-        super().__init__()
-
-        self.rect = pygame.Rect(
-            int(x),
-            int(y),
-            int(width),
-            int(height)
+     if character_id not in CHARACTERS:
+        raise ValueError(
+            f"Unknown character ID: {character_id}"
         )
 
-        self.x_vel = 0
-        self.y_vel = 0
+    # Store the selected character.
+     self.character_id = character_id
+     self.character_data = CHARACTERS[character_id]
 
-        self.mask = None
+    # Load sprites only once per character.
+     if character_id not in self.SPRITE_CACHE:
+        data = self.character_data
 
-        self.direction = "right"
+        self.SPRITE_CACHE[character_id] = load_sprite_sheets(
+            "MainCharacters",
+            data["sprite_folder"],
+            data["frame_width"],
+            data["frame_height"],
+            True
+        )
 
-        self.animation_count = 0
-        self.fall_count = 0
-        self.jump_count = 0
+     self.SPRITES = self.SPRITE_CACHE[character_id]
 
-        self.hit = False
-        self.hit_count = 0
+    # Character-specific configuration.
+     self.GRAVITY = self.character_data["gravity"]
+     self.JUMP_STRENGTH = self.character_data["jump_strength"]
+     self.MAX_FALL_SPEED = self.character_data["max_fall_speed"]
+     self.ANIMATION_DELAY = self.character_data["animation_delay"]
+     self.move_speed = self.character_data["move_speed"]
 
-        # Prevent sprite access before first update.
-        self.sprite = self.SPRITES[
-            "idle_right"
-        ][0]
+    # Existing player initialization.
+     self.rect = pygame.Rect(
+        int(x),
+        int(y),
+        int(width),
+        int(height)
+    )
 
-        self.update()
+     self.x_vel = 0
+     self.y_vel = 0
+     self.mask = None
+     self.direction = "right"
 
+     self.animation_count = 0
+     self.fall_count = 0
+     self.jump_count = 0
+
+     self.hit = False
+     self.hit_count = 0
+
+     self.sprite = self.SPRITES["idle_right"][0]
+     self.update()
     # ======================================================
     # JUMP
     # ======================================================

@@ -3,6 +3,7 @@ import pygame as p
 from .base_scene import Scene
 from ui.button import Button
 from ..systems.audio_manager import audio_manager
+from ..systems.background import TiledBackground
 
 
 GAME_MUSIC_PATH = "game/Music/MUSIC.wav"
@@ -93,6 +94,7 @@ class PauseScene(Scene):
         )
     def main_menu(self):
         from .menu_scene import MenuScene
+        audio_manager.play_music("menu")
         self.scene_manager.change_scene(
             MenuScene(self.scene_manager)
         )
@@ -100,7 +102,7 @@ class PauseScene(Scene):
     def level_select_game(self):
 
         from .level_select_scene import LevelSelectScene
-
+        audio_manager.play_music("menu")
         self.scene_manager.change_scene(
             LevelSelectScene(
                 self.scene_manager
@@ -174,9 +176,8 @@ class PauseScene(Scene):
         screen
     ):
 
-        screen.fill(
-            (20, 20, 20)
-        )
+        background = TiledBackground("assets/Background/Blue.png")
+        background.draw(screen)
 
         title_font = p.font.SysFont(
             "Arial",
