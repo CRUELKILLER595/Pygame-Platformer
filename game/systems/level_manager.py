@@ -11,13 +11,14 @@ from game.objects.checkpoint import Checkpoint
 from game.objects.start import Start
 from game.objects.end import End
 from game.objects.object import Object
+from game.objects.fruit import Fruit
+from .asset_manager import Asset,AssetManager
 
 
 class LevelManager:
 
-    def __init__(self):
-
-        self.assets = load_assets()
+    def __init__(self,asset_manager):
+        self.asset_manager=asset_manager
 
     def load_level(
         self,
@@ -48,9 +49,7 @@ class LevelManager:
             x = grid_x * TILE_SIZE
             y = grid_y * TILE_SIZE
 
-            asset = self.assets.get(
-                asset_id
-            )
+            asset = self.asset_manager.get(asset_id)
 
             if asset is None:
 
@@ -148,12 +147,12 @@ class LevelManager:
 
             elif asset.object_class == End:
 
-                obj = End(
-                    x,
-                    y,
-                    asset.width,
-                    asset.height
-                )
+             obj = End(
+        x,
+        y,
+        asset.image,
+        asset.pressed_image
+    )
 
             # ==================================================
             # GENERIC OBJECT
@@ -170,6 +169,14 @@ class LevelManager:
                 )
 
                 obj.image = asset.image
+            elif asset.object_class==Fruit:
+                obj=Fruit(
+                    x,
+                    y,
+                    asset,
+                    asset.name
+                )
+            
 
             # ==================================================
             # UNKNOWN

@@ -9,12 +9,14 @@ from .asset_library import load_assets,get_categories
 from .palette import Palette
 from .dropdown import OptionBox
 from .undo_redo import Action
+from ..game.systems.asset_manager import AssetManager,Asset
 
 
 # --------------------------------------------------
 # INITIALIZATION
 # --------------------------------------------------
-ASSETS = load_assets()
+asset_manager = AssetManager()
+ASSETS = asset_manager.load_all()
 py.init()
 
 screen_height = 800
@@ -32,7 +34,7 @@ level_data = {
 undo_stack = []
 redo_stack = []
 
-option_list = get_categories()
+option_list = asset_manager.get_categories()
 print("Categories:", option_list)
 
 font = py.font.SysFont("TimesNewRoman", 24)
@@ -63,7 +65,7 @@ pal = Palette(
     screen_width + 10,
     55,
     300,
-    "Characters"
+    "CHARACTERS"
 )
 
 # Dropdown

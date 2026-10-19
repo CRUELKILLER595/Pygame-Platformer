@@ -1,21 +1,25 @@
 import pygame
 from game.settings import screen_height, side_margin
+from game.systems.asset_manager import AssetManager,Asset
 pygame.init()
 
 class Palette:
-    def __init__(self, assets, x, y, width,category):
-        self.assets = assets
-        self.x = x
-        self.y = y
-        self.width = width
-        self.category=category
-        self.filtered_assets = [
-    asset for asset in self.assets.values()
-    if asset.category == self.category
-]
-        self.dragged_asset=None
+ def __init__(self, assets, x, y, width, category):
+    self.assets = assets
+    self.x = x
+    self.y = y
+    self.width = width
+    self.category = category
 
-    def draw_palette(self, screen):
+    self.filtered_assets = [
+        asset
+        for asset in self.assets.values()
+        if asset.category == self.category
+    ]
+
+    self.dragged_asset = None
+
+ def draw_palette(self, screen):
      pygame.draw.rect(
         screen,
         (25, 40, 65),
@@ -52,7 +56,7 @@ class Palette:
         asset.height
     )
        print(asset.palette_rect)
-    def get_clicked_asset(self,mouse_pos):
+ def get_clicked_asset(self,mouse_pos):
      for asset in self.filtered_assets:
        if asset.palette_rect.collidepoint(mouse_pos):
          return asset

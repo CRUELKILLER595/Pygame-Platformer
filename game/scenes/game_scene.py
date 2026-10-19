@@ -2,8 +2,8 @@ import pygame as p
 
 from .base_scene import Scene
 from ..systems.score_manager import ScoreManager
-from ..systems.asset_manager import AssetManager
-
+from ..systems.asset_manager import AssetManager,Asset
+from ..systems.game_timer import GameTimer
 from ..settings import (
     WIDTH,
     HEIGHT,
@@ -18,6 +18,7 @@ from ..objects.checkpoint import Checkpoint
 from ..objects.start import Start
 from ..objects.end import End
 from ..objects.fruit import Fruit
+from ..objects.animated_object import AnimatedObject
 
 from .pausescene import PauseScene
 
@@ -27,6 +28,7 @@ from ..systems.background import TiledBackground
 from ..systems.audio_manager import audio_manager
 
 from ui.button import Button
+from ui.hud import HUD
 
 
 MUSIC_PATH = "game/Music/MUSIC.wav"
@@ -51,8 +53,20 @@ class GameScene(Scene):
         self.score_manager = ScoreManager()
 
         self.level_path = level_path
+        self.game_timer = GameTimer(
+    120
+)
+        self.game_timer.start()
+        self.hud = HUD(
+    self.score_manager,
+    self.game_timer
+)
 
         self.asset_manager.load_all()
+        self.asset_manager.load_all()
+
+        print("ASSET CATEGORIES:", self.asset_manager.get_categories())
+        print("TOTAL ASSETS:", len(self.asset_manager.assets))
 
         # --------------------------------------------------
         # FONT
@@ -87,7 +101,7 @@ class GameScene(Scene):
         # LEVEL
         # --------------------------------------------------
 
-        self.level_manager = LevelManager()
+        self.level_manager = LevelManager(self.asset_manager)
 
         # --------------------------------------------------
         # BACKGROUND
@@ -104,6 +118,9 @@ class GameScene(Scene):
         self.offset_x = 0
 
         self.scroll_area_width = 200
+        self.camera_x = 0
+        self.level_start_x = 0
+        self.camera_dead_zone = WIDTH // 3
 
         # --------------------------------------------------
         # LOAD LEVEL
@@ -114,29 +131,25 @@ class GameScene(Scene):
                 self.level_path
             )
         )
+     
+        print("\n========== LEVEL OBJECTS ==========")
+
+        for obj in self.objects:
+
+         print(
+        type(obj).__name__,
+        "pos =", obj.rect.topleft,
+        "size =", obj.rect.size,
+        "image =", obj.image.get_size()
+    )
+
+        print("===================================")
 
         # --------------------------------------------------
         # TEST FRUIT
         # --------------------------------------------------
 
-        apple_asset = (
-            self.asset_manager.get(
-                "apple"
-            )
-        )
-
-        if apple_asset is not None:
-
-            apple = Fruit(
-                500,
-                300,
-                apple_asset,
-                "Apple"
-            )
-
-            self.objects.append(
-                apple
-            )
+     
 
         # --------------------------------------------------
         # CHECKPOINT
@@ -175,9 +188,11 @@ class GameScene(Scene):
                         )
                     )
 
+
                     self.checkpoint_manager.set_start_position(
                         spawn
                     )
+                    self.level_start_x = spawn[0]
 
         print(
             "Loaded:",
@@ -204,7 +219,9 @@ class GameScene(Scene):
     def draw(
         self,
         screen
-    ):
+    ): 
+       
+
 
         self.background.draw(
             screen
@@ -243,6 +260,9 @@ class GameScene(Scene):
         self.options_button.draw(
             screen
         )
+        self.hud.draw(
+    screen
+)
 
     # ======================================================
     # HORIZONTAL MOVEMENT
@@ -260,7 +280,7 @@ class GameScene(Scene):
         # LEFT
         # ----------------------------------------------
 
-        if keys[p.K_a]:
+        if keys[p.K_a or p.K_left_arrow]:
 
             self.player.move_left(
                 PLAYER_VEL
@@ -270,7 +290,7 @@ class GameScene(Scene):
         # RIGHT
         # ----------------------------------------------
 
-        elif keys[p.K_d]:
+        elif keys[p.K_d or p.K_right_arrow]:
 
             self.player.move_right(
                 PLAYER_VEL
@@ -285,6 +305,9 @@ class GameScene(Scene):
             self.player.x_vel = 0
 
             self.player.animation_count = 0
+        if self.player.rect.x < self.level_start_x:
+          self.player.rect.x = self.level_start_x
+        
 
     # ======================================================
     # VERTICAL COLLISION
@@ -303,6 +326,7 @@ class GameScene(Scene):
                 (
                     Fire,
                     Checkpoint,
+                    Fruit,
                     Start,
                     End
                 )
@@ -400,28 +424,34 @@ class GameScene(Scene):
 
     def handle_end(self):
 
-        if self.player is None:
+     if self.player is None:
+        return
 
-            return
+     for obj in self.objects:
 
-        for obj in self.objects:
+        if isinstance(
+            obj,
+            End
+        ):
 
-            if isinstance(
-                obj,
-                End
+            if obj.check_collision(
+                self.player
             ):
 
-                if self.player.rect.colliderect(
-                    obj.rect
-                ):
+                print(
+                    "LEVEL COMPLETE"
+                )
 
-                    if not obj.completed:
+                from .end_scene import EndScene
 
-                        obj.complete()
+                self.scene_manager.change_scene(
+                    EndScene(
+                        self.scene_manager,
+                        self.score_manager
+                    )
+                )
 
-                        print(
-                            "LEVEL COMPLETE"
-                        )
+                return
 
     # ======================================================
     # FALL
@@ -509,7 +539,7 @@ class GameScene(Scene):
 
                 if event.key == p.K_ESCAPE:
 
-                    self.open_settings()
+                    self.pause_game()
 
                 # ------------------------------------------
                 # JUMP
@@ -558,6 +588,7 @@ class GameScene(Scene):
     # ======================================================
 
     def update(self):
+        self.game_timer.update()
 
         if self.player is None:
 
@@ -611,15 +642,36 @@ class GameScene(Scene):
         # ANIMATED OBJECTS
         # --------------------------------------------------
 
+        # Update animated objects.
+        # Update animated objects.
         for obj in self.objects:
 
-            if isinstance(
-                obj,
-                Fire
-            ):
+           if isinstance(
+        obj,
+        AnimatedObject
+    ):
 
-                obj.loop()
+             if isinstance(
+            obj,
+            Fruit
+        ):
 
+                obj.check_collision(
+                self.player,
+                self.score_manager
+
+            )
+
+                finished = obj.loop()
+
+             if (
+            isinstance(obj, Fruit)
+            and obj.collected
+            and finished
+        ):
+
+               self.objects.remove(obj)
+               break
         # --------------------------------------------------
         # CAMERA
         # --------------------------------------------------

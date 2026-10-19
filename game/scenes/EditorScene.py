@@ -13,7 +13,7 @@ from editor.asset_library import load_assets
 from editor.palette import Palette
 from editor.dropdown import OptionBox
 from editor.undo_redo import Action
-
+from ..systems.asset_manager import AssetManager,Asset
 from ..objects.player import Player
 
 from ..settings import screen_width
@@ -25,6 +25,7 @@ class EditorScene(Scene):
 
         self.scene_manager = scene_manager
         self.level_path = level_path
+        self.asset_manager=AssetManager()
 
         # --------------------------------------------------
         # EDITOR SETTINGS
@@ -51,7 +52,7 @@ class EditorScene(Scene):
         # ASSETS
         # --------------------------------------------------
 
-        self.ASSETS = load_assets()
+        self.ASSETS = self.asset_manager.load_all()
 
         self.current_asset = None
 
@@ -78,10 +79,9 @@ class EditorScene(Scene):
         # PALETTE
         # --------------------------------------------------
 
-        self.option_list = [
-            "CHARACTERS",
-            "TILES"
-        ]
+        self.option_list =self.asset_manager.get_categories()
+        print("ASSETS TYPE:", type(self.ASSETS))
+        print("CATEGORIES:", self.option_list)
 
         self.font = p.font.SysFont(
             "TimesNewRoman",

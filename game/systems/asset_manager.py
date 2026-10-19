@@ -543,6 +543,20 @@ class AssetManager:
 
         if not os.path.exists(path):
             return
+        collected_path = os.path.join(
+            path,
+            "Collected.png"
+        )
+
+        collected_frames = []
+
+        if os.path.exists(collected_path):
+
+            collected_frames = load_animation_sheet(
+                collected_path,
+                32,
+                32
+            )
 
         for filename in os.listdir(
             path
@@ -587,7 +601,8 @@ class AssetManager:
                 width=TILE_SIZE,
                 height=TILE_SIZE,
                 animations={
-                    "idle": frames
+                    "idle": frames,
+                    "collected":collected_frames
                 },
                 score_value=score
             )
@@ -871,6 +886,33 @@ class AssetManager:
                 TILE_SIZE
             )
         )
+        pressed_path = os.path.join(
+    ITEMS,
+    "Checkpoints",
+    "End",
+    "End (Pressed) (64x64).png"
+)
+
+        pressed_image = self.load_image(
+    pressed_path
+)
+
+        pressed_image = pressed_image.subsurface(
+    p.Rect(
+        0,
+        0,
+        64,
+        64
+    )
+).copy()
+
+        pressed_image = p.transform.scale(
+    pressed_image,
+    (
+        TILE_SIZE,
+        TILE_SIZE
+    )
+)
 
         asset = Asset(
             id="end",
@@ -885,6 +927,7 @@ class AssetManager:
         self.register_asset(
             asset
         )
+        asset.pressed_image=pressed_image
 
 
     # --------------------------------------------------
@@ -1020,5 +1063,8 @@ class AssetManager:
         self.load_backgrounds()
 
         self.load_other_assets()
+
+        print("ASSET CATEGORIES:", self.get_categories())
+        print("TOTAL ASSETS:", len(self.assets))
 
         return self.assets

@@ -55,6 +55,7 @@ class AnimatedObject(Object):
         self.rect = self.image.get_rect(
             topleft=self.rect.topleft
         )
+        finished = False
 
         if (
             self.animation_count
@@ -62,4 +63,6 @@ class AnimatedObject(Object):
             >= len(sprites)
         ):
             self.animation_count = 0
+            finished=True
+        return finished
             

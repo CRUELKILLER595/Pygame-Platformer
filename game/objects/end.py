@@ -1,17 +1,4 @@
-import pygame as p
-
 from .object import Object
-
-
-END_IDLE_PATH = (
-    "assets/Items/Checkpoints/"
-    "End/End (Idle)(1).png"
-)
-
-END_PRESSED_PATH = (
-    "assets/Items/Checkpoints/"
-    "End/End (Pressed) (64x64)(1).png"
-)
 
 
 class End(Object):
@@ -20,39 +7,34 @@ class End(Object):
         self,
         x,
         y,
-        width=64,
-        height=64
+        idle_image,
+        pressed_image
     ):
 
         super().__init__(
             x,
             y,
-            width,
-            height,
+            idle_image.get_width(),
+            idle_image.get_height(),
             "end"
         )
 
-        idle_image = p.image.load(
-            END_IDLE_PATH
-        ).convert_alpha()
-
-        pressed_image = p.image.load(
-            END_PRESSED_PATH
-        ).convert_alpha()
-
-        self.idle_image = p.transform.scale(
-            idle_image,
-            (width, height)
-        )
-
-        self.pressed_image = p.transform.scale(
-            pressed_image,
-            (width, height)
-        )
+        self.idle_image = idle_image
+        self.pressed_image = pressed_image
 
         self.image = self.idle_image
-
         self.completed = False
+    def check_collision(self, player):
+
+        if self.completed:
+            return False
+
+        if self.rect.colliderect(player.rect):
+
+            self.complete()
+            return True
+
+        return False
 
     def complete(self):
 

@@ -323,7 +323,7 @@ class EditorLevelSelectScene(Scene):
     ):
 
         screen.fill(
-            (255, 255, 255)
+            (0, 0,0)
         )
 
         title = self.title_font.render(
