@@ -446,8 +446,9 @@ class GameScene(Scene):
                 ):
 
                     self.respawn_player()
-
+        
                     return
+                
 
     # ======================================================
     # LEVEL PROGRESSION
