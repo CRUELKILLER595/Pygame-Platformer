@@ -131,6 +131,15 @@ class CharacterSelectScene(Scene):
                         MenuScene(self.scene_manager)
                     )
                     return
+                if event.key == p.K_RETURN:
+                    self.scene_manager.selected_character_id = (
+                        self.selected_id
+                    )
+
+                    self.scene_manager.change_scene(
+                        LevelSelectScene(self.scene_manager)
+                    )
+                    return
 
             if event.type != p.MOUSEBUTTONDOWN:
                 continue

@@ -1,0 +1,49 @@
+PixelBound — Platform Enemies Pack
+====================================
+
+INSTALL
+-------
+Extract this ZIP into the ROOT of your PixelBound project. It creates:
+    assets/Enemies/*.png
+
+Do not rename the PNGs yet; the loader will use a filename-to-frame map.
+
+SPRITE SHEET DIMENSIONS (original PNG pixels)
+--------------------------------------------
+Bee_Black.png       16x32   -> 16x16 cells, 2 cells vertically
+Bee_Black_ko.png    64x16   -> 16x16 cells, 4 cells horizontally
+Bee_Blue.png        32x16   -> 16x16 cells, 2 cells horizontally
+Bee_Blue_ko.png     64x16   -> 16x16 cells, 4 cells horizontally
+Bee_bones.png       96x16   -> 16x16 cells, 6 cells horizontally
+Bee_Exp.png         48x16   -> 16x16 cells, 3 cells horizontally
+Fro_Green.png       64x16   -> 16x16 cells, 4 cells horizontally
+Fro_Orange.png      64x16   -> 16x16 cells, 4 cells horizontally
+Fro_red.png         64x16   -> 16x16 cells, 4 cells horizontally
+She_Blue.png        64x16   -> 16x16 cells, 4 cells horizontally
+She_green.png       64x16   -> 16x16 cells, 4 cells horizontally
+She_red.png         64x16   -> 16x16 cells, 4 cells horizontally
+She_Yellow.png      64x16   -> 16x16 cells, 4 cells horizontally
+Tur_Blue.png        60x32   -> 20x32 cells, 3 cells horizontally
+Tur_Bones.png       60x32   -> 20x32 cells, 3 cells horizontally
+Tur_front.png       40x32   -> 20x32 cells, 2 cells horizontally
+Tur_green.png       60x32   -> 20x32 cells, 3 cells horizontally
+Tur_Green_back.png  40x32   -> 20x32 cells, 2 cells horizontally
+Tur_Green_Side.png  40x32   -> 20x32 cells, 2 cells horizontally
+Tur_red.png         60x32   -> 20x32 cells, 3 cells horizontally
+Tur_red_back.png    40x32   -> 20x32 cells, 2 cells horizontally
+Tur_Yellow.png      60x32   -> 20x32 cells, 3 cells horizontally
+Tur_Yellow_back.png 40x32   -> 20x32 cells, 2 cells horizontally
+
+These dimensions are based on the supplied PNGs. Keep the original frame
+sizes during slicing; scaling to the in-game display size should happen after
+frame extraction to avoid slicing errors or distorted aspect ratios.
+
+LICENSE / CREDIT
+----------------
+The supplied ZIP did not contain a license/readme file. The itch.io page for
+La Red Games' “Platform Enemies Pack (Now Free)” states personal and commercial
+use and modification are allowed; credit is not required but appreciated.
+Source: https://laredgames.itch.io/platform-enemies-pack
+
+This notes file is only a convenience for the project; the original PNGs are
+otherwise kept unchanged.

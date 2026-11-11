@@ -1,7 +1,16 @@
 import pygame as py
 
 from .json_manager import save_level, load_level
-from game.settings import FPS, TILE_SIZE, SPRITE_SIZE, screen_width
+from pixelbound_core.config.constants import (
+    TILE_SIZE,
+    SPRITE_SIZE,
+)
+
+from editor.config import (
+    FPS,
+    screen_width,
+    side_margin
+)
 from .Grid import draw_grid
 from .mouse import mouse
 from .camera import camera

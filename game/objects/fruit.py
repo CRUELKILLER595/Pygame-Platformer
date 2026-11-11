@@ -35,7 +35,8 @@ class Fruit(AnimatedObject):
      self.collected = True
 
      score_manager.collect_fruit(
-        self.value
+        self.value,
+        self.fruit_type
     )
 
      self.play(

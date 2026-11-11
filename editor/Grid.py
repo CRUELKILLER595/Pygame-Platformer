@@ -1,8 +1,8 @@
 import pygame as py
 py.init()
 
-from game.settings import TILE_SIZE, side_margin
-
+from pixelbound_core.config.constants import TILE_SIZE
+from editor.config import side_margin
 
 def draw_grid(screen, camera):
     start_x = (camera.x // TILE_SIZE) * TILE_SIZE

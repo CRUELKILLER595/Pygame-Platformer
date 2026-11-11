@@ -16,8 +16,8 @@ class Player(pygame.sprite.Sprite):
     # PHYSICS
     # --------------------------------------------------
 
-    GRAVITY = 0.65
-    JUMP_STRENGTH = 50
+    GRAVITY = 0.50
+    JUMP_STRENGTH = 20000
     MAX_FALL_SPEED = 14
 
     # --------------------------------------------------
@@ -92,7 +92,8 @@ class Player(pygame.sprite.Sprite):
      self.animation_count = 0
      self.fall_count = 0
      self.jump_count = 0
-
+     # Brief protection while jumping past a hazard.
+     self.hazard_grace_frames = 0
      self.hit = False
      self.hit_count = 0
 
@@ -110,6 +111,8 @@ class Player(pygame.sprite.Sprite):
             return False
 
         self.y_vel = -self.JUMP_STRENGTH
+        # Allow time to rise clear of a nearby trap.
+        self.hazard_grace_frames = 16
 
         self.animation_count = 0
 
@@ -216,9 +219,9 @@ class Player(pygame.sprite.Sprite):
         fps
     ):
 
-        # ----------------------------------------------
-        # GRAVITY
-        # ----------------------------------------------
+        # Count down the brief jump protection.
+        if self.hazard_grace_frames > 0:
+            self.hazard_grace_frames -= 1
 
         self.y_vel += self.GRAVITY
 

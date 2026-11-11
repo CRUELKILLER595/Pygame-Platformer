@@ -1,35 +1,54 @@
-import pygame
-from .object import Object
-from game.SpriteLoader import load_sprite_sheets
-class Fire(Object):
-    ANIMATION_DELAY = 3
+from .trap import Trap
 
-    def __init__(self, x, y, width, height):
-        super().__init__(x, y, width, height, "fire")
-        self.fire = load_sprite_sheets("Traps", "Fire", width, height)
-        self.image = self.fire["off"][0]
-        self.mask = pygame.mask.from_surface(self.image)
-        self.animation_count = 0
-        self.animation_name = "off"
+
+class Fire(Trap):
+
+    def __init__(
+        self,
+        x,
+        y,
+        width,
+        height,
+        animations=None,
+        name="Fire",
+        image=None,
+        collision_profile=None,
+        animation_speed=4,
+        asset=None,
+    ):
+        if asset is not None:
+            animations = getattr(
+                asset,
+                "animations",
+                animations
+            )
+
+            name = getattr(
+                asset,
+                "name",
+                "Fire"
+            )
+
+            image = getattr(
+                asset,
+                "image",
+                image
+            )
+
+        super().__init__(
+            x=x,
+            y=y,
+            width=width,
+            height=height,
+            animations=animations,
+            name=name or "Fire",
+            image=image,
+            collision_profile=collision_profile,
+            animation_speed=animation_speed,
+        )
 
     def on(self):
-        self.animation_name = "on"
+        self.set_animation("on")
 
     def off(self):
-        self.animation_name = "off"
-
-    def loop(self):
-        sprites = self.fire[self.animation_name]
-        sprite_index = (self.animation_count //
-                        self.ANIMATION_DELAY) % len(sprites)
-        self.image = sprites[sprite_index]
-        self.animation_count += 1
-
-        self.rect = self.image.get_rect(topleft=(self.rect.x, self.rect.y))
-        self.mask = pygame.mask.from_surface(self.image)
-
-        if self.animation_count // self.ANIMATION_DELAY > len(sprites):
-            self.animation_count = 0
-
-
-
+        self.set_animation("off")

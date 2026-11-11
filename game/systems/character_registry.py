@@ -11,9 +11,9 @@ CHARACTERS = {
         "animation_delay": 3,
 
         "move_speed": PLAYER_VEL,
-        "gravity": 0.65,
-        "jump_strength": 11,
-        "max_fall_speed": 14,
+        "gravity": 0.55,
+        "jump_strength": 15,
+        "max_fall_speed": 7,
     },
 
     "ninja_frog": {
@@ -25,9 +25,9 @@ CHARACTERS = {
         "animation_delay": 3,
 
         "move_speed": PLAYER_VEL,
-        "gravity": 0.65,
-        "jump_strength": 11,
-        "max_fall_speed": 14,
+        "gravity": 0.55,
+        "jump_strength": 15,
+        "max_fall_speed": 7,
     },
 
     "pink_man": {
@@ -39,9 +39,9 @@ CHARACTERS = {
         "animation_delay": 3,
 
         "move_speed": PLAYER_VEL,
-        "gravity": 0.65,
-        "jump_strength": 11,
-        "max_fall_speed": 14,
+        "gravity": 0.55,
+        "jump_strength": 15,
+        "max_fall_speed": 7,
     },
 
     "virtual_guy": {
@@ -53,9 +53,9 @@ CHARACTERS = {
         "animation_delay": 3,
 
         "move_speed": PLAYER_VEL,
-        "gravity": 0.65,
-        "jump_strength": 11,
-        "max_fall_speed": 14,
+        "gravity": 0.55,
+        "jump_strength": 15,
+        "max_fall_speed": 7,
     },
 }
 

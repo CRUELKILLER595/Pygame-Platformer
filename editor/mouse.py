@@ -1,5 +1,6 @@
 import pygame
-from game.settings import TILE_SIZE,screen_width
+from pixelbound_core.config.constants import TILE_SIZE
+from editor.config import screen_width
 def mouse(screen):
     mouse_x,mouse_y=pygame.mouse.get_pos()
     tile_x=mouse_x//TILE_SIZE

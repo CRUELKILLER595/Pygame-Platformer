@@ -9,6 +9,7 @@ from ui.button import Button
 from .base_scene import Scene
 from..systems.background import TiledBackground
 from game.settings import WIDTH, HEIGHT
+from game.systems import audio_manager
 
 
 UI_PATH = os.path.join(

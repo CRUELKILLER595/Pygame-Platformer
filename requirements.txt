@@ -1,0 +1,27 @@
+
+# ==========================================
+# PIXELBOUND - GAME AND LEVEL EDITOR
+# ==========================================
+
+# Game framework
+pygame==2.6.1
+
+# HTTP requests and online communication
+requests>=2.32,<3.0
+
+
+# ==========================================
+# PIXELBOUND - BACKEND
+# ==========================================
+
+# Backend API framework and server dependencies
+fastapi[standard]>=0.115,<1.0
+
+# Data validation
+pydantic>=2.7,<3.0
+
+# Firebase authentication and Firestore
+firebase-admin>=6.5,<8.0
+
+# Environment variable management
+python-dotenv>=1.0,<2.0
