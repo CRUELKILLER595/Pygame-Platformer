@@ -11,13 +11,11 @@ from..systems.audio_manager import audio_manager
 from .character_select_scene import CharacterSelectScene
 from ui.auth import AuthPopup
 import os
-import pygame as p
 
 from ui.button import Button
 from ..systems.audio_manager import audio_manager
 import os
 Music_path=os.path.join("game","Music","MENU_MUSIC.wav")
-p.init()
 class MenuScene(Scene):
    
     def __init__(self, scene_manager):

@@ -5,8 +5,6 @@ import pygame
 from os import listdir
 from os.path import isfile, join
 from .settings import WIDTH,HEIGHT
-pygame.init()
-window = pygame.display.set_mode((WIDTH, HEIGHT))
 def flip(sprites):
     return [pygame.transform.flip(sprite, True, False) for sprite in sprites]
 

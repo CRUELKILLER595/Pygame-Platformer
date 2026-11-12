@@ -1,33 +1,29 @@
 import pygame as p
 from .scenemanager import SceneManager
-from.scenes.menu_scene import MenuScene
 class Application:
 
      def __init__(self):
+      p.init()
 
-        p.init()
+      self.width = 1250
+      self.height = 900
 
-        self.width = 1250
-        self.height = 900
+      self.screen = p.display.set_mode(
+        (self.width, self.height)
+    )
 
-        self.screen = p.display.set_mode(
-            (self.width, self.height)
-        )
+      p.display.set_caption("PixelBound")
 
-        p.display.set_caption("Platformer")
+      self.clock = p.time.Clock()
+      self.running = True
 
-        self.clock = p.time.Clock()
+    # Import scenes only after Pygame initialization.
+      from.scenes.menu_scene import MenuScene
 
-        self.running = True
-
-        # Create scene manager
-        self.scene_manager = SceneManager()
-
-        # IMPORTANT:
-        # Set the first scene
-        self.scene_manager.change_scene(
-            MenuScene(self.scene_manager)
-        )
+      self.scene_manager = SceneManager()
+      self.scene_manager.change_scene(
+        MenuScene(self.scene_manager)
+    )
      def run(self):
         while self.running:
 

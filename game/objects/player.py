@@ -6,7 +6,6 @@ from ..systems.character_registry import (
 )
 from ..systems.audio_manager import audio_manager
 
-pygame.init()
 
 class Player(pygame.sprite.Sprite):
 

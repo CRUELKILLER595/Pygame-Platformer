@@ -1,5 +1,4 @@
-import pygame as p
-p.init()
+
 class SceneManager:
     def __init__(self):
         self.current_scene = None
