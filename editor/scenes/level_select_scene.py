@@ -114,7 +114,13 @@ class EditorLevelSelectScene(EditorBaseScene):
             self.previous_page,
             self.previous_image,
         )
-
+        self.back_button = Button(
+    "BACK",
+    (40, 35),
+    (110, 45),
+    self.page_font,
+    self.return_to_title
+)
         self.next_button = Button(
             "Next",
             (self.width - 180, self.height - 80),
@@ -345,7 +351,13 @@ class EditorLevelSelectScene(EditorBaseScene):
     # ==========================================
     # LEVEL SELECTION
     # ==========================================
+    def return_to_title(self):
 
+     from editor.scenes.title_scene import EditorTitleScene
+
+     self.scene_manager.change_scene(
+        EditorTitleScene(self.application)
+    )
     def select_level(self, level_path):
 
       from editor.scenes.editor_scene import EditorScene

@@ -1,19 +1,16 @@
 
 from apps.editor.application import EditorApplication
-
-from editor.scenes.level_select_scene import EditorLevelSelectScene
+from editor.scenes.title_scene import EditorTitleScene
 
 
 def main():
 
     application = EditorApplication()
 
-    level_selector = EditorLevelSelectScene(
-        application
-    )
+    title_scene = EditorTitleScene(application)
 
     application.scene_manager.change_scene(
-        level_selector
+        title_scene
     )
 
     application.run()
