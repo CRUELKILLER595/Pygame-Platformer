@@ -4,7 +4,6 @@ from .base_scene import Scene
 from ui.button import Button
 from.level_select_scene import LevelSelectScene
 from.AboutScene import AboutScene
-from.level_editor_select_scene import EditorLevelSelectScene
 from..systems.background import TiledBackground
 from..settings import WIDTH, HEIGHT
 from..systems.audio_manager import audio_manager
@@ -39,9 +38,6 @@ class MenuScene(Scene):
         os.path.join(Menu_Path, "Play.png")
     ).convert_alpha()
 
-      Editor_button = p.image.load(
-        os.path.join(Main_Path, "Editor.png")
-    ).convert_alpha()
 
       Quit_button = p.image.load(
         os.path.join(Main_Path, "Close.png")
@@ -57,14 +53,7 @@ class MenuScene(Scene):
         Play_button,
     )
 
-      self.editor_button = Button(
-        "EDITOR",
-        (500, 375),
-        (250, 70),
-        self.font,
-        self.start_editor,
-        Editor_button,
-    )
+     
 
       self.about_button = Button(
         "ABOUT",
@@ -109,17 +98,11 @@ class MenuScene(Scene):
      self.auth_popup.show()
       
 
-    def start_editor(self):
-
-        print("EDITOR BUTTON PRESSED")
-        self.scene_manager.change_scene(
-            EditorLevelSelectScene(self.scene_manager)
-        )
+    
 
     def quit_game(self):
         p.mixer.music.stop()
-        p.quit()
-        raise SystemExit
+        self.scene_manager.request_quit()
     def start_about(self):
         print("ABOUT BUTTON PRESSED")
         self.scene_manager.change_scene(
@@ -130,14 +113,14 @@ class MenuScene(Scene):
      for event in events:
 
         if event.type == p.QUIT:
-            p.quit()
-            raise SystemExit
+            audio_manager.stop_music()
+            self.scene_manager.request_quit()
+            
         if self.auth_popup.visible:
             self.auth_popup.handle_event(event)
             continue
         self.auth_button.handle_event(event)
         self.play_button.handle_event(event)
-        self.editor_button.handle_event(event)
         self.quit_button.handle_event(event)
         self.about_button.handle_event(event)
         return super().handle_events(events)
@@ -169,7 +152,6 @@ class MenuScene(Scene):
         )
         
         self.play_button.draw(screen)
-        self.editor_button.draw(screen)
         self.quit_button.draw(screen)
         self.about_button.draw(screen)
         self.auth_button.draw(screen)

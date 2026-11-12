@@ -80,8 +80,8 @@ class SettingsScene(Scene):
 
             if event.type == p.QUIT:
 
-                p.quit()
-                raise SystemExit
+                self.scene_manager.request_quit()
+                
 
             self.music_slider.handle_event(
                 event

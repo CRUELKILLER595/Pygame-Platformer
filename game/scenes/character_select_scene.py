@@ -120,8 +120,8 @@ class CharacterSelectScene(Scene):
         for event in events:
 
             if event.type == p.QUIT:
-                p.quit()
-                raise SystemExit
+                self.scene_manager.request_quit()
+            
 
             if event.type == p.KEYDOWN:
                 if event.key == p.K_ESCAPE:

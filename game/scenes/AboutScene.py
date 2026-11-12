@@ -54,8 +54,7 @@ class AboutScene(Scene):
     def handle_events(self, events):
         for event in events:
             if event.type == p.QUIT:
-                p.quit()
-                raise SystemExit
+                self.scene_manager.request_quit()
             self.back_button.handle_event(event)
 
     def draw(self, screen):

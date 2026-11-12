@@ -1,7 +1,8 @@
 
 class SceneManager:
-    def __init__(self):
+    def __init__(self,application=None):
         self.current_scene = None
+        self.application = application
 
 
     def handle_events(self, events):
@@ -19,3 +20,6 @@ class SceneManager:
     def draw(self, screen):
      print("DRAWING:", type(self.current_scene).__name__)
      self.current_scene.draw(screen)
+    def request_quit(self):
+        if self.application:
+            self.application.quit()

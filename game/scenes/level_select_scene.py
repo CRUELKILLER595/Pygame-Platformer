@@ -218,8 +218,8 @@ class LevelSelectScene(Scene):
     def handle_events(self, events):
         for event in events:
             if event.type == p.QUIT:
-                p.quit()
-                raise SystemExit
+                self.scene_manager.request_quit()
+                
             if event.type==p.KEYDOWN and event.key==p.K_ESCAPE:
                 from .menu_scene import MenuScene
                 audio_manager.play_music("menu")

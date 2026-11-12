@@ -55,8 +55,8 @@ class EndScene(Scene):
     def handle_events(self, events):
         for event in events:
             if event.type == p.QUIT:
-                p.quit()
-                raise SystemExit
+                self.scene_manager.request_quit()
+                
 
             if self.next_button is not None:
                 self.next_button.handle_event(event)

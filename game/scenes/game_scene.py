@@ -892,8 +892,8 @@ class GameScene(Scene):
         for event in events:
 
             if event.type == p.QUIT:
-                p.quit()
-                raise SystemExit
+                self.scene_manager.request_quit()
+                
 
             self.pause_button.handle_event(event)
             self.options_button.handle_event(event)

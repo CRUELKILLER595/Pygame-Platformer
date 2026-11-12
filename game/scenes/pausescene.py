@@ -123,9 +123,7 @@ class PauseScene(Scene):
     def quit_game(self):
 
         audio_manager.stop_music()
-
-        p.quit()
-        raise SystemExit
+        self.scene_manager.request_quit()
 
     def handle_events(
         self,
@@ -135,9 +133,9 @@ class PauseScene(Scene):
         for event in events:
 
             if event.type == p.QUIT:
-
-                p.quit()
-                raise SystemExit
+                audio_manager.stop_music()
+                self.scene_manager.request_quit()
+                
 
             self.resume_button.handle_event(
                 event

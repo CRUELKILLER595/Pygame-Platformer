@@ -387,7 +387,7 @@ class EditorLevelSelectScene(EditorBaseScene):
             if event.type == p.KEYDOWN:
 
                 if event.key == p.K_ESCAPE:
-                    self.application.quit()
+                    self.return_to_title()
                     return
 
                 elif event.key == p.K_LEFT:
