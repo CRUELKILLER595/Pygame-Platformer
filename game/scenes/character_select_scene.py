@@ -21,7 +21,7 @@ class CharacterSelectScene(Scene):
         self.title_font = p.font.SysFont("Arial", 42)
         self.font = p.font.SysFont("Arial", 24)
         self.small_font = p.font.SysFont("Arial", 17)
-        self.background = TiledBackground("Assets/Background/Purple.png")
+        self.background = TiledBackground("assets/Background/Purple.png")
 
         self.selected_id = getattr(
             scene_manager,

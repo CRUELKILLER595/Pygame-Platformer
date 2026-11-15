@@ -27,9 +27,7 @@ class Player(pygame.sprite.Sprite):
 
     ANIMATION_DELAY = 3
 
-    JUMP_SOUND = pygame.mixer.Sound(
-        "game/SFX/sound1.mp3"
-    )
+    
 
     # --------------------------------------------------
     # CONSTRUCTOR
@@ -122,9 +120,7 @@ class Player(pygame.sprite.Sprite):
 
             self.fall_count = 0
 
-            audio_manager.play_sfx(
-                self.JUMP_SOUND
-            )
+            audio_manager.play_sfx("jump")
 
         return True
 

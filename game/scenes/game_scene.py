@@ -928,14 +928,19 @@ class GameScene(Scene):
 
     def pause_game(self):
 
-        audio_manager.stop_music()
+    # Pause the countdown timer.
+     self.game_timer.pause()
 
-        self.scene_manager.change_scene(
-            PauseScene(
-                self.scene_manager,
-                self
-            )
+    # Pause the current soundtrack without losing its position.
+     audio_manager.pause_music()
+
+    # Switch to the pause scene.
+     self.scene_manager.change_scene(
+        PauseScene(
+            self.scene_manager,
+            self
         )
+    )
 
     # ======================================================
     # UPDATE

@@ -11,15 +11,23 @@ class SceneManager:
     def update(self):
         self.current_scene.update()
 
-    def draw(self, screen):
-        self.current_scene.draw(screen)
+   
     def change_scene(self, scene):
+
+     if isinstance(scene, type):
+        raise TypeError(
+            f"Expected a scene instance, received "
+            f"{scene.__name__}. Pass {scene.__name__}(...) instead."
+        )
+
      print("CHANGING TO:", type(scene).__name__)
      self.current_scene = scene
+       
 
     def draw(self, screen):
-     print("DRAWING:", type(self.current_scene).__name__)
-     self.current_scene.draw(screen)
+        if self.current_scene is not None:
+            self.current_scene.draw(screen)
+
     def request_quit(self):
         if self.application:
             self.application.quit()

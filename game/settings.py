@@ -6,7 +6,7 @@ from pixelbound_core.config.constants import (
 
 WIDTH, HEIGHT = 1000, 800
 
-FPS = 30
+FPS = 75
 PLAYER_VEL = 3
 
 CHARACTER_LENGTH = 32

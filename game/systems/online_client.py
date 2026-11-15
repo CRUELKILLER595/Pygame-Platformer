@@ -1,9 +1,16 @@
-import requests
+try:
+    import requests
+except ModuleNotFoundError:
+    requests = None
 import json
 import re
 from pathlib import Path
 API_BASE_URL = "http://127.0.0.1:8000"
 def fetch_level_catalog():
+    if requests is None:
+        raise RuntimeError(
+            "The 'requests' library is required for online features."
+        )
     response = requests.get(
         f"{API_BASE_URL}/levels/catalog",
         timeout=5,
@@ -12,6 +19,10 @@ def fetch_level_catalog():
 
     return response.json().get("levels", [])
 def download_level_to_cache(level_id):
+    if requests is None:
+     raise RuntimeError(
+        "Online level downloads are unavailable in this browser build."
+    )
     if not re.fullmatch(r"[a-zA-Z0-9_-]+", level_id):
         raise ValueError("Invalid level ID")
 

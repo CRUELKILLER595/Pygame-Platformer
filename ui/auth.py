@@ -2,7 +2,10 @@
 import threading
 
 import pygame as p
-import requests
+try:
+    import requests
+except ModuleNotFoundError:
+    requests = None
 
 from game.settings import WIDTH, HEIGHT
 
@@ -186,6 +189,12 @@ class AuthPopup:
     def submit(self):
         if self.busy:
             return
+        if requests is None:
+         self.message = (
+        "Authentication is unavailable in browser mode."
+    )
+         self.message_color = (255, 170, 100)
+         return
 
         email = self.fields["email"].strip()
         password = self.fields["password"]

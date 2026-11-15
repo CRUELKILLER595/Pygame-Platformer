@@ -50,7 +50,9 @@ class AboutScene(Scene):
         return lines
     def go_to_menu(self):
         from.menu_scene import MenuScene
-        self.scene_manager.change_scene(MenuScene)
+        self.scene_manager.change_scene(
+            MenuScene(self.scene_manager)
+        )
     def handle_events(self, events):
         for event in events:
             if event.type == p.QUIT:
