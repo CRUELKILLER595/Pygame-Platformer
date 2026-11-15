@@ -1,15 +1,19 @@
-
 """Independent level selection screen for PixelBound Editor."""
 
 import re
+import tkinter as tk
 from pathlib import Path
+from tkinter import simpledialog
 
 import pygame as p
 
 from editor.scenes.base_scene import EditorBaseScene
+from editor.services.level_service import EditorLevelService
 
 from pixelbound_core.ui.button import Button
 from pixelbound_core.graphics.tiled_background import TiledBackground
+
+from pixelbound_core.levels import load_level_data
 
 from pixelbound_core.config.paths import (
     ASSETS_DIR,
@@ -35,6 +39,10 @@ class EditorLevelSelectScene(EditorBaseScene):
         self.application = application
         self.scene_manager = application.scene_manager
 
+        self.level_service = EditorLevelService(
+            application.asset_library
+        )
+
         self.width = WINDOW_WIDTH
         self.height = WINDOW_HEIGHT
 
@@ -43,18 +51,19 @@ class EditorLevelSelectScene(EditorBaseScene):
         self.buttons = []
 
         self.selected_level_path = None
+        self.message_text = ""
 
-        # ------------------------------------------
+        # ==========================================
         # BACKGROUND
-        # ------------------------------------------
+        # ==========================================
 
         self.background = TiledBackground(
             ASSETS_DIR / "Background" / "Gray.png"
         )
 
-        # ------------------------------------------
+        # ==========================================
         # ASSET DIRECTORIES
-        # ------------------------------------------
+        # ==========================================
 
         self.level_image_dir = (
             ASSETS_DIR / "Menu" / "Levels"
@@ -64,9 +73,9 @@ class EditorLevelSelectScene(EditorBaseScene):
             ASSETS_DIR / "Menu" / "Buttons"
         )
 
-        # ------------------------------------------
+        # ==========================================
         # FONTS
-        # ------------------------------------------
+        # ==========================================
 
         self.font = p.font.SysFont(
             "TimesNewRoman",
@@ -88,15 +97,15 @@ class EditorLevelSelectScene(EditorBaseScene):
             18,
         )
 
-        # ------------------------------------------
+        # ==========================================
         # THUMBNAILS
-        # ------------------------------------------
+        # ==========================================
 
         self.level_images = self.load_level_images()
 
-        # ------------------------------------------
-        # NAVIGATION BUTTONS
-        # ------------------------------------------
+        # ==========================================
+        # NAVIGATION BUTTON IMAGES
+        # ==========================================
 
         self.next_image = self.load_nav_image(
             "Next.png"
@@ -106,6 +115,34 @@ class EditorLevelSelectScene(EditorBaseScene):
             "Previous.png"
         )
 
+        # ==========================================
+        # BACK BUTTON
+        # ==========================================
+
+        self.back_button = Button(
+            "BACK",
+            (40, 35),
+            (110, 45),
+            self.page_font,
+            self.return_to_title,
+        )
+
+        # ==========================================
+        # ADD LEVEL BUTTON
+        # ==========================================
+
+        self.add_level_button = Button(
+            "ADD LEVEL +",
+            (self.width - 200, 35),
+            (160, 45),
+            self.page_font,
+            self.add_level,
+        )
+
+        # ==========================================
+        # PAGINATION BUTTONS
+        # ==========================================
+
         self.previous_button = Button(
             "Previous",
             (60, self.height - 80),
@@ -114,13 +151,7 @@ class EditorLevelSelectScene(EditorBaseScene):
             self.previous_page,
             self.previous_image,
         )
-        self.back_button = Button(
-    "BACK",
-    (40, 35),
-    (110, 45),
-    self.page_font,
-    self.return_to_title
-)
+
         self.next_button = Button(
             "Next",
             (self.width - 180, self.height - 80),
@@ -130,9 +161,9 @@ class EditorLevelSelectScene(EditorBaseScene):
             self.next_image,
         )
 
-        # ------------------------------------------
+        # ==========================================
         # LOAD LEVELS
-        # ------------------------------------------
+        # ==========================================
 
         self.load_levels()
 
@@ -146,18 +177,27 @@ class EditorLevelSelectScene(EditorBaseScene):
 
         for index in range(1, 51):
 
-            path = self.level_image_dir / f"{index:02d}.png"
+            path = (
+                self.level_image_dir
+                / f"{index:02d}.png"
+            )
 
             if not path.is_file():
                 continue
 
             try:
+
                 images[index] = p.image.load(
                     str(path)
                 ).convert_alpha()
 
             except p.error as error:
-                print("Could not load level thumbnail:", path, error)
+
+                print(
+                    "Could not load level thumbnail:",
+                    path,
+                    error,
+                )
 
         return images
 
@@ -174,21 +214,38 @@ class EditorLevelSelectScene(EditorBaseScene):
                 continue
 
             try:
+
                 return p.image.load(
                     str(path)
                 ).convert_alpha()
 
             except p.error as error:
-                print("Could not load navigation image:", path, error)
+
+                print(
+                    "Could not load navigation image:",
+                    path,
+                    error,
+                )
 
         return None
 
     # ==========================================
-    # LEVEL DISCOVERY
+    # LEVEL DISCOVERY / DISPLAY
     # ==========================================
 
     @staticmethod
     def level_sort_key(level_path):
+
+        # Numbered campaign levels appear first.
+        # Custom levels are grouped afterwards.
+
+        if level_path.stem.lower().startswith("custom_"):
+
+            return (
+                1,
+                0,
+                level_path.name.lower(),
+            )
 
         match = re.search(
             r"\d+",
@@ -196,6 +253,7 @@ class EditorLevelSelectScene(EditorBaseScene):
         )
 
         if match:
+
             return (
                 0,
                 int(match.group()),
@@ -208,6 +266,48 @@ class EditorLevelSelectScene(EditorBaseScene):
             level_path.name.lower(),
         )
 
+    @staticmethod
+    def get_level_title(level_path):
+
+        try:
+
+            level_data = load_level_data(level_path)
+
+            title = level_data.get("level_name")
+
+            if isinstance(title, str) and title.strip():
+                return title.strip()
+
+        except Exception as error:
+
+            print(
+                "Could not read level title:",
+                level_path,
+                error,
+            )
+
+        return level_path.stem
+
+    def fit_level_button_label(self, title):
+
+        label = str(title)
+
+        max_width = self.BUTTON_WIDTH - 12
+
+        if self.font.size(label)[0] <= max_width:
+            return label
+
+        shortened = label
+
+        while (
+            shortened
+            and self.font.size(shortened + "…")[0] > max_width
+        ):
+
+            shortened = shortened[:-1]
+
+        return shortened + "…" if shortened else "LEVEL"
+
     def load_levels(self):
 
         if not LEVELS_DIR.is_dir():
@@ -218,6 +318,8 @@ class EditorLevelSelectScene(EditorBaseScene):
             )
 
             self.level_files = []
+            self.show_page()
+
             return
 
         self.level_files = sorted(
@@ -238,7 +340,15 @@ class EditorLevelSelectScene(EditorBaseScene):
     # THUMBNAIL RESOLUTION
     # ==========================================
 
-    def get_level_thumbnail(self, level_path, global_index):
+    def get_level_thumbnail(
+        self,
+        level_path,
+        global_index,
+    ):
+
+        # Custom levels do not have predefined thumbnails.
+        if level_path.stem.lower().startswith("custom_"):
+            return None
 
         match = re.search(
             r"\d+",
@@ -252,8 +362,10 @@ class EditorLevelSelectScene(EditorBaseScene):
                 int(match.group())
             )
 
-        # Retain sequential fallback for legacy naming.
-        candidate_numbers.append(global_index + 1)
+        # Fallback for legacy level naming.
+        candidate_numbers.append(
+            global_index + 1
+        )
 
         for number in dict.fromkeys(candidate_numbers):
 
@@ -273,11 +385,13 @@ class EditorLevelSelectScene(EditorBaseScene):
         self.buttons.clear()
 
         start_index = (
-            self.current_page * self.LEVELS_PER_PAGE
+            self.current_page
+            * self.LEVELS_PER_PAGE
         )
 
         end_index = (
-            start_index + self.LEVELS_PER_PAGE
+            start_index
+            + self.LEVELS_PER_PAGE
         )
 
         page_files = self.level_files[
@@ -298,8 +412,9 @@ class EditorLevelSelectScene(EditorBaseScene):
             row = index // self.COLUMNS
             col = index % self.COLUMNS
 
-            x = start_x + col * (
-                self.BUTTON_WIDTH + 40
+            x = (
+                start_x
+                + col * (self.BUTTON_WIDTH + 40)
             )
 
             y = 240 + row * 145
@@ -311,8 +426,16 @@ class EditorLevelSelectScene(EditorBaseScene):
                 global_index,
             )
 
+            title = self.get_level_title(
+                level_path
+            )
+
+            button_label = self.fit_level_button_label(
+                title
+            )
+
             button = Button(
-                level_path.stem.upper(),
+                button_label,
                 position=(x, y),
                 size=(
                     self.BUTTON_WIDTH,
@@ -339,6 +462,7 @@ class EditorLevelSelectScene(EditorBaseScene):
         if self.current_page < max_page:
 
             self.current_page += 1
+
             self.show_page()
 
     def previous_page(self):
@@ -346,34 +470,123 @@ class EditorLevelSelectScene(EditorBaseScene):
         if self.current_page > 0:
 
             self.current_page -= 1
+
             self.show_page()
 
     # ==========================================
-    # LEVEL SELECTION
+    # CREATE NEW LEVEL
     # ==========================================
+
+    def add_level(self):
+
+        root = None
+        level_name = None
+
+        try:
+
+            root = tk.Tk()
+
+            root.withdraw()
+
+            root.attributes(
+                "-topmost",
+                True,
+            )
+
+            level_name = simpledialog.askstring(
+                "Create New Level",
+                "Enter a name for your new level:",
+                parent=root,
+            )
+
+        except tk.TclError as error:
+
+            self.message_text = (
+                f"Could not open level-name dialog: {error}"
+            )
+
+            print(self.message_text)
+
+            return
+
+        finally:
+
+            if root is not None:
+
+                try:
+                    root.destroy()
+
+                except tk.TclError:
+                    pass
+
+        # User cancelled the dialog.
+        if level_name is None:
+            return
+
+        try:
+
+            level_path = self.level_service.create_level(
+                level_name
+            )
+
+        except (ValueError, OSError, RuntimeError) as error:
+
+            self.message_text = str(error)
+
+            print(
+                "Could not create level:",
+                error,
+            )
+
+            return
+
+        print(
+            "NEW LEVEL CREATED:",
+            level_path.name,
+        )
+
+        # Refresh the level list.
+        self.load_levels()
+
+        # Open the new level immediately.
+        self.select_level(level_path)
+
+    # ==========================================
+    # NAVIGATION
+    # ==========================================
+
     def return_to_title(self):
 
-     from editor.scenes.title_scene import EditorTitleScene
+        from editor.scenes.title_scene import EditorTitleScene
 
-     self.scene_manager.change_scene(
-        EditorTitleScene(self.application)
-    )
+        self.scene_manager.change_scene(
+            EditorTitleScene(self.application)
+        )
+
     def select_level(self, level_path):
 
-      from editor.scenes.editor_scene import EditorScene
+        from editor.scenes.editor_scene import EditorScene
 
-      selected_path = Path(level_path)
+        selected_path = Path(level_path)
 
-      self.application.selected_level_path = selected_path
+        self.application.selected_level_path = selected_path
 
-      print("OPENING LEVEL:", selected_path.name)
+        print(
+            "OPENING LEVEL:",
+            selected_path.name,
+        )
 
-      editor_scene = EditorScene(
-        self.application,
-        selected_path
-    )
+        editor_scene = EditorScene(
+            self.application,
+            selected_path,
+        )
 
-      self.application.scene_manager.change_scene(editor_scene)
+        self.application.scene_manager.change_scene(
+            editor_scene
+        )
+
+    # ==========================================
+    # EVENTS
     # ==========================================
 
     def handle_events(self, events):
@@ -381,25 +594,37 @@ class EditorLevelSelectScene(EditorBaseScene):
         for event in events:
 
             if event.type == p.QUIT:
+
                 self.application.quit()
+
                 return
 
             if event.type == p.KEYDOWN:
 
                 if event.key == p.K_ESCAPE:
+
                     self.return_to_title()
+
                     return
 
                 elif event.key == p.K_LEFT:
+
                     self.previous_page()
 
                 elif event.key == p.K_RIGHT:
+
                     self.next_page()
 
+            # Existing level buttons.
             for button in self.buttons:
                 button.handle_event(event)
 
+            self.back_button.handle_event(event)
+
+            self.add_level_button.handle_event(event)
+
             self.previous_button.handle_event(event)
+
             self.next_button.handle_event(event)
 
     # ==========================================
@@ -417,9 +642,9 @@ class EditorLevelSelectScene(EditorBaseScene):
 
         self.background.draw(screen)
 
-        # ------------------------------------------
+        # ==========================================
         # TITLE
-        # ------------------------------------------
+        # ==========================================
 
         title = self.title_font.render(
             "SELECT LEVEL TO EDIT",
@@ -434,14 +659,33 @@ class EditorLevelSelectScene(EditorBaseScene):
             ),
         )
 
-        # ------------------------------------------
+        # ==========================================
+        # STATUS MESSAGE
+        # ==========================================
+
+        if self.message_text:
+
+            message = self.status_font.render(
+                self.message_text,
+                True,
+                (150, 35, 35),
+            )
+
+            screen.blit(
+                message,
+                message.get_rect(
+                    center=(self.width // 2, 165)
+                ),
+            )
+
+        # ==========================================
         # EMPTY STATE
-        # ------------------------------------------
+        # ==========================================
 
         if not self.level_files:
 
             empty_text = self.font.render(
-                "No level files found",
+                "No level files found. Create your first level!",
                 True,
                 (40, 40, 40),
             )
@@ -453,19 +697,28 @@ class EditorLevelSelectScene(EditorBaseScene):
                 ),
             )
 
-        # ------------------------------------------
+        # ==========================================
         # LEVEL BUTTONS
-        # ------------------------------------------
+        # ==========================================
 
         for button in self.buttons:
             button.draw(screen)
 
-        # ------------------------------------------
-        # NAVIGATION
-        # ------------------------------------------
+        # ==========================================
+        # NAVIGATION BUTTONS
+        # ==========================================
+
+        self.back_button.draw(screen)
+
+        self.add_level_button.draw(screen)
 
         self.previous_button.draw(screen)
+
         self.next_button.draw(screen)
+
+        # ==========================================
+        # PAGE INDICATOR
+        # ==========================================
 
         total_pages = max(
             1,
@@ -483,18 +736,25 @@ class EditorLevelSelectScene(EditorBaseScene):
         screen.blit(
             page_text,
             page_text.get_rect(
-                center=(self.width // 2, self.height - 45)
+                center=(
+                    self.width // 2,
+                    self.height - 45,
+                )
             ),
         )
 
-        # ------------------------------------------
-        # SELECTED LEVEL STATUS
-        # ------------------------------------------
+        # ==========================================
+        # SELECTED LEVEL
+        # ==========================================
 
         if self.selected_level_path is not None:
 
+            selected_name = self.get_level_title(
+                self.selected_level_path
+            )
+
             status = self.status_font.render(
-                f"Selected: {self.selected_level_path.stem}",
+                f"Selected: {selected_name}",
                 True,
                 (20, 75, 35),
             )
@@ -502,6 +762,9 @@ class EditorLevelSelectScene(EditorBaseScene):
             screen.blit(
                 status,
                 status.get_rect(
-                    center=(self.width // 2, 205)
+                    center=(
+                        self.width // 2,
+                        205,
+                    )
                 ),
             )
